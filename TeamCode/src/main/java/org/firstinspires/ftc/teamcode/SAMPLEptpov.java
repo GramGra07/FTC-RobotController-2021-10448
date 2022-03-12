@@ -20,7 +20,7 @@ import java.util.List;
 
 @TeleOp(name="Pushbot: Teleop POV", group="Pushbot")
 @Disabled
-public class SAMPLEptPOV extends LinearOpMode {
+public class SAMPLEptpov extends LinearOpMode {
 
     /* Declare OpMode members. */
     HardwarePushbot robot           = new HardwarePushbot();   // Use a Pushbot's hardware
