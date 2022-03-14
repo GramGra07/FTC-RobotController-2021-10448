@@ -1,3 +1,6 @@
+# I was able to join easily as a collaborator.  I will push these changes to your repo to see what happens on your end.
+
+----
 ## NOTICE
 
 This repository contains the public FTC SDK for the Freight Frenzy (2021-2022) competition season.
