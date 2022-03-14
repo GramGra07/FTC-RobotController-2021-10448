@@ -14,9 +14,6 @@ import java.util.List;
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
@@ -66,10 +63,7 @@ public class SAMPLEptpov extends LinearOpMode {
     private TFObjectDetector tfod;
     @Override
     public void runOpMode() {
-        initVuforia();
-        initTfod();
-        init_all();
-        init_controls(true,false,true);
+        init_controls(true,false,true,true,true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -77,7 +71,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.update();
         waitForStart();
         while (opModeIsActive()) {
-            init_controls(false,false,true);
+            init_controls(false,false,true,false,true);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -118,10 +112,50 @@ public class SAMPLEptpov extends LinearOpMode {
             sleep(50);
         }
     }
+    public void init_controls(boolean update,boolean auto,boolean color_sensor,boolean initial,boolean camera){
+        telemetry.addData("Hello", "Driver Lookin good today");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Systems", "Should Be Good To Go");
+        if (initial){
+            init_all();
+            if(camera){
+                initVuforia();
+                initTfod();
+            }
+        }
+        if (color_sensor){
+            colorSensorLight();
+            init_colorSensor();
+            try {
+                runSample(); // actually execute the sample
+            } finally {
+                relativeLayout.post(new Runnable() {
+                    public void run() {
+                        relativeLayout.setBackgroundColor(Color.WHITE);
+                    }
+                });
+            }
+        }
+        if (update){
+            telemetry.update();
+        }else{
+            telemetry.addData("Systems", "Running");
+        }
+        if (!auto){
+            telemetry.addData("The Force", "Is With You Driver");
+        }else{
+            telemetry.addData("Hope", "Auto Works");
+        }
+    }
     public void calibrateColor(boolean on){
         //telemetry.addLine("Higher gain values mean that the sensor
         // will report larger numbers for Red, Green, and Blue, and Value\n");
-        if (on==true) {
+        if (on) {
             telemetry.addData("In Calibration State", "Press Back to Leave");
             calibration = 1;
             if (gamepad1.dpad_up) {
@@ -129,7 +163,7 @@ public class SAMPLEptpov extends LinearOpMode {
             } else if (gamepad1.dpad_down && gain > 1) {
                 gain -= 0.005;
             }
-        }else if (on==false){
+        }else if (!on){
             calibration=0;
         }
     }
@@ -168,39 +202,6 @@ public class SAMPLEptpov extends LinearOpMode {
     public void colorSensorLight(){
         SwitchableLight light = (SwitchableLight)colorSensor;
         light.enableLight(!light.isLightOn());
-    }
-    public void init_controls(boolean update,boolean auto,boolean color_sensor){
-        telemetry.addData("Hello", "Driver Lookin good today");
-        telemetry.addData("Control", "");
-        telemetry.addData("Control", "");
-        telemetry.addData("Control", "");
-        telemetry.addData("Control", "");
-        telemetry.addData("Control", "");
-        telemetry.addData("Control", "");
-        telemetry.addData("Systems", "Should Be Good To Go");
-        if (color_sensor==true){
-            colorSensorLight();
-            init_colorSensor();
-            try {
-                runSample(); // actually execute the sample
-            } finally {
-                relativeLayout.post(new Runnable() {
-                    public void run() {
-                        relativeLayout.setBackgroundColor(Color.WHITE);
-                    }
-                });
-            }
-        }
-        if (update==true){
-            telemetry.update();
-        }else{
-            telemetry.addData("Systems", "Running");
-        }
-        if (auto==false){
-            telemetry.addData("The Force", "Is With You Driver");
-        }else{
-            telemetry.addData("Hope", "Auto Works");
-        }
     }
     public void access_pushSensor(){
         if (digitalTouch.getState()) {
