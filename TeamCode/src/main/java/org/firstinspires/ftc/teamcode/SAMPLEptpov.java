@@ -33,16 +33,13 @@ public class SAMPLEptpov extends LinearOpMode {
         double turn;
         double max;
         double slowMode = 0; //0 is off
-        // DcMotor motorFrontLeft;
-        //DcMotor motorBackLeft;
-        //DcMotor motorFrontRight;
-        //DcMotor motorBackRight;
-        DcMotor motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
-        DcMotor motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
-        DcMotor motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
-        DcMotor motorBackRight = hardwareMap.dcMotor.get("motorBackRight");
-        motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        double regular_divider=1;
+        double slowMode_divider=2;
+         DcMotor motorFrontLeft;
+         DcMotor motorBackLeft;
+        DcMotor motorFrontRight;
+        DcMotor motorBackRight;
+
 
 
         robot.init(hardwareMap);
@@ -56,6 +53,12 @@ public class SAMPLEptpov extends LinearOpMode {
 
 
         while (opModeIsActive()) {
+            motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
+            motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
+            motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
+            motorBackRight = hardwareMap.dcMotor.get("motorBackRight");
+            motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+            motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -68,27 +71,27 @@ public class SAMPLEptpov extends LinearOpMode {
             double backLeftPower = (y - x + rx) / denominator;
             double frontRightPower = (y - x - rx) / denominator;
             double backRightPower = (y + x - rx) / denominator;
-
-            motorFrontLeft.setPower(frontLeftPower);
-            motorBackLeft.setPower(backLeftPower);
-            motorFrontRight.setPower(frontRightPower);
-            motorBackRight.setPower(backRightPower);
             if (gamepad1.a && slowMode==0){
                 slowMode=1;
             }else if (gamepad1.a && slowMode==1){
                 slowMode=0;
             }
             if (slowMode==1){
-                backRightPower /=2;
-                backLeftPower /=2;
-                frontRightPower /=2;
-                frontLeftPower /=2;
+                backRightPower /=slowMode_divider;
+                backLeftPower /=slowMode_divider;
+                frontRightPower /=slowMode_divider;
+                frontLeftPower /=slowMode_divider;
             }else{
-                backRightPower /=1;
-                backLeftPower /=1;
-                frontRightPower /=1;
-                frontLeftPower /=1;
+                backRightPower /=regular_divider;
+                backLeftPower /=regular_divider;
+                frontRightPower /=regular_divider;
+                frontLeftPower /=regular_divider;
             }
+            motorFrontLeft.setPower(frontLeftPower);
+            motorBackLeft.setPower(backLeftPower);
+            motorFrontRight.setPower(frontRightPower);
+            motorBackRight.setPower(backRightPower);
+
 
             telemetry.update();
 
