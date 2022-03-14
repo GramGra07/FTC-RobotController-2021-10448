@@ -2,11 +2,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -15,15 +11,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
-
 import java.util.List;
-
-
 @TeleOp(name="Pushbot: Teleop POV", group="Pushbot")
 @Disabled
 public class SAMPLEptpov extends LinearOpMode {
-
-    /* Declare OpMode members. */
     HardwarePushbot robot           = new HardwarePushbot();   // Use a Pushbot's hardware
     double left;
     double right;
@@ -37,33 +28,43 @@ public class SAMPLEptpov extends LinearOpMode {
     DcMotorSimple motorBackLeft;
     DcMotorSimple motorFrontRight;
     DcMotorSimple motorBackRight;
-    public double power;
-
+    public double levelRead=0;
+    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
+    private static final String[] LABELS = {
+            "Ball",
+            "Cube",
+            "Duck",
+            "Marker"
+    };
+    private static final String VUFORIA_KEY =
+            "AXmzBcj/////AAABme5HSJ/H3Ucup73WSIaV87tx/sFHYaWfor9OZVg6afr2Bw7kNolHd+mF5Ps91SlQpgBHulieI0jcd86kqJSwx46BZ8v8DS5S5x//eQWMEGjMDnvco4/oTcDwuSOLIVZG2UtLmJXPS1L3CipjabePFlqAL2JtBlN78p6ZZbRFSHW680hWEMSimZuQy/cMudD7J/MjMjMs7b925b8BkijlnTQYr7CbSlXrpDh5K+9fLlk2OyEZ4w7tm7e4UJDInJ/T3oi8PqqKCqkUaTkJWlQsvoELbDu5L2FgzsuDhBLe2rHtJRqfORd7n+6M30UdFSsxqq5TaZztkWgzRUr1GC3yBSTS6iFqEuL3g06GrfwOJF0F";
+    /**
+     * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
+     * localization engine.
+     */
+    private VuforiaLocalizer vuforia;
+    /**
+     * {@link #tfod} is the variable we will use to store our instance of the TensorFlow Object
+     * Detection engine.
+     */
+    private TFObjectDetector tfod;
     @Override
     public void runOpMode() {
         // Send telemetry message to signify robot waiting;
+        initVuforia();
+        initTfod();
+        init_all();
+        if (tfod != null) {
+            tfod.activate();
+            tfod.setZoom(1, 16.0 / 9.0);
+        }
         telemetry.addData("Say", "Hello Driver");    //
         telemetry.update();
-
-
         waitForStart();
-
-
         while (opModeIsActive()) {
-            robot.init(hardwareMap);
-            motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
-            motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
-            motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
-            motorBackRight = hardwareMap.dcMotor.get("motorBackRight");
-            motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-            motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
-
-            // Denominator is the largest motor power (absolute value) or 1
-            // This ensures all the powers maintain the same ratio, but only when
-            // at least one is out of the range [-1, 1]
             double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
             double frontLeftPower = (y + x + rx) / denominator;
             double backLeftPower = (y - x + rx) / denominator;
@@ -79,29 +80,78 @@ public class SAMPLEptpov extends LinearOpMode {
                 backLeftPower /=slowMode_divider;
                 frontRightPower /=slowMode_divider;
                 frontLeftPower /=slowMode_divider;
+                allPower((int) backLeftPower);
             }else{
                 backRightPower /=regular_divider;
                 backLeftPower /=regular_divider;
                 frontRightPower /=regular_divider;
                 frontLeftPower /=regular_divider;
+                allPower((int) backLeftPower);
             }
-            motorFrontLeft.setPower(frontLeftPower);
-            motorBackLeft.setPower(backLeftPower);
-            motorFrontRight.setPower(frontRightPower);
-            motorBackRight.setPower(backRightPower);
-
-
-            telemetry.update();
-
-            // Pace this loop so jaw action is reasonable speed.
+            run_vu();
             sleep(50);
         }
     }
-    public <power> void allPower(power){
-        power=power;
+    public void run_vu(){
+        //vuforia
+        if (tfod != null) {
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+            if (updatedRecognitions != null) {
+                telemetry.addData("# Object Detected", updatedRecognitions.size());
+                int i = 0;
+                boolean isDuckDetected = false;
+                for (Recognition recognition : updatedRecognitions) {
+                    telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                    telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                            recognition.getLeft(), recognition.getTop());
+                    telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                            recognition.getRight(), recognition.getBottom());
+                    i++;
+                    if (recognition.getLabel().equals("Duck")) {
+                        isDuckDetected = true;
+                        telemetry.addData("Object Detected", "Duck");
+
+                        if (recognition.getLeft() < 200) {
+                        } else if (recognition.getLeft() < 400) {
+                        } else if (recognition.getLeft() < 600) {
+                        } else {
+                        }
+
+                    } else {
+                    }
+
+                }}}
+        //////////////ends vuforia
+    }
+    public void allPower (int power){
         motorFrontLeft.setPower(power);
         motorBackLeft.setPower(power);
         motorFrontRight.setPower(power);
         motorBackRight.setPower(power);
+    }
+    public void init_all(){
+        robot.init(hardwareMap);
+        motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
+        motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
+        motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
+        motorBackRight = hardwareMap.dcMotor.get("motorBackRight");
+        motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
+    }
+    private void initVuforia() {
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+    }
+    private void initTfod() {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfodParameters.minResultConfidence = 0.3f;
+        tfodParameters.isModelTensorFlow2 = true;
+        tfodParameters.inputSize = 320;
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
     }
 }
