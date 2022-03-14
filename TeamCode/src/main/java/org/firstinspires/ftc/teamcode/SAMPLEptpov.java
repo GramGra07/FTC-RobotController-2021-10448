@@ -19,6 +19,12 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 @TeleOp(name="Pushbot: Teleop POV", group="Pushbot")
 @Disabled
 public class SAMPLEptpov extends LinearOpMode {
@@ -41,6 +47,8 @@ public class SAMPLEptpov extends LinearOpMode {
     DigitalChannel digitalTouch;
     NormalizedColorSensor colorSensor;
     View relativeLayout;
+    private DistanceSensor sensorRange;
+    Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
     public double levelRead=0;
     private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
     private static final String[] LABELS = {
@@ -63,7 +71,7 @@ public class SAMPLEptpov extends LinearOpMode {
     private TFObjectDetector tfod;
     @Override
     public void runOpMode() {
-        init_controls(true,false,true,true,true);
+        init_controls(true,false,true,true,true,true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -71,7 +79,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.update();
         waitForStart();
         while (opModeIsActive()) {
-            init_controls(false,false,true,false,true);
+            init_controls(false,false,true,false,true,true);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -112,7 +120,8 @@ public class SAMPLEptpov extends LinearOpMode {
             sleep(50);
         }
     }
-    public void init_controls(boolean update,boolean auto,boolean color_sensor,boolean initial,boolean camera){
+    public void init_controls(boolean update,boolean auto,boolean color_sensor,boolean initial,
+                              boolean camera,boolean distance){
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Control", "");
         telemetry.addData("Control", "");
@@ -121,9 +130,14 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Control", "");
         telemetry.addData("Control", "");
         telemetry.addData("Systems", "Should Be Good To Go");
+        if (distance==true){
+            telemetry.addData("Distance Sensor", "Running");
+            init_distance();
+        }
         if (initial){
             init_all();
             if(camera){
+                telemetry.addData("Camera", "Running");
                 initVuforia();
                 initTfod();
             }
@@ -131,6 +145,7 @@ public class SAMPLEptpov extends LinearOpMode {
         if (color_sensor){
             colorSensorLight();
             init_colorSensor();
+            telemetry.addData("Color Sensor", "Running");
             try {
                 runSample(); // actually execute the sample
             } finally {
@@ -151,6 +166,15 @@ public class SAMPLEptpov extends LinearOpMode {
         }else{
             telemetry.addData("Hope", "Auto Works");
         }
+    }
+    public void init_distance(){
+        telemetry.addData("deviceName",sensorRange.getDeviceName() );
+        telemetry.addData("range", String.format("%.01f mm", sensorRange.getDistance(DistanceUnit.MM)));
+        telemetry.addData("range", String.format("%.01f cm", sensorRange.getDistance(DistanceUnit.CM)));
+        telemetry.addData("range", String.format("%.01f m", sensorRange.getDistance(DistanceUnit.METER)));
+        telemetry.addData("range", String.format("%.01f in", sensorRange.getDistance(DistanceUnit.INCH)));
+        telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
+        telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
     }
     public void calibrateColor(boolean on){
         //telemetry.addLine("Higher gain values mean that the sensor
@@ -258,6 +282,7 @@ public class SAMPLEptpov extends LinearOpMode {
         digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
         motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
     }
     public void initVuforia() {
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
