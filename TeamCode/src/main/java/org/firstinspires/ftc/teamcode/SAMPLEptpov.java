@@ -4,15 +4,24 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
-
 import java.util.List;
+import android.app.Activity;
+import android.graphics.Color;
+import android.view.View;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.SwitchableLight;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 @TeleOp(name="Pushbot: Teleop POV", group="Pushbot")
 @Disabled
 public class SAMPLEptpov extends LinearOpMode {
@@ -25,11 +34,16 @@ public class SAMPLEptpov extends LinearOpMode {
     double slowMode = 0; //0 is off
     double regular_divider=1;
     double slowMode_divider=2;
+    float gain=2;
+    final float[] hsvValues = new float[3];
+    double calibration = 0;//0=off
     DcMotorSimple motorFrontLeft;
     DcMotorSimple motorBackLeft;
     DcMotorSimple motorFrontRight;
     DcMotorSimple motorBackRight;
     DigitalChannel digitalTouch;
+    NormalizedColorSensor colorSensor;
+    View relativeLayout;
     public double levelRead=0;
     private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
     private static final String[] LABELS = {
@@ -55,7 +69,7 @@ public class SAMPLEptpov extends LinearOpMode {
         initVuforia();
         initTfod();
         init_all();
-        init_controls(true,false);
+        init_controls(true,false,true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -63,7 +77,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.update();
         waitForStart();
         while (opModeIsActive()) {
-            init_controls(false,false);
+            init_controls(false,false,true);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -73,6 +87,14 @@ public class SAMPLEptpov extends LinearOpMode {
             double frontRightPower = (y - x - rx) / denominator;
             double backRightPower = (y + x - rx) / denominator;
             access_pushSensor();
+            //calibration
+            if (gamepad1.back && calibration==0){
+                calibrateColor(true);
+            }else if (gamepad1.back && calibration==1){
+                calibrateColor(false);
+            }
+            //
+            //slowmode
             if (gamepad1.a && slowMode==0){
                 slowMode=1;
             }else if (gamepad1.a && slowMode==1){
@@ -91,11 +113,63 @@ public class SAMPLEptpov extends LinearOpMode {
                 frontLeftPower /=regular_divider;
                 allPower((int) backLeftPower);
             }
+            //
             run_vu();
             sleep(50);
         }
     }
-    public void init_controls(boolean update,boolean auto){
+    public void calibrateColor(boolean on){
+        //telemetry.addLine("Higher gain values mean that the sensor
+        // will report larger numbers for Red, Green, and Blue, and Value\n");
+        if (on==true) {
+            telemetry.addData("In Calibration State", "Press Back to Leave");
+            calibration = 1;
+            if (gamepad1.dpad_up) {
+                gain += 0.005;
+            } else if (gamepad1.dpad_down && gain > 1) {
+                gain -= 0.005;
+            }
+        }else if (on==false){
+            calibration=0;
+        }
+    }
+    public void init_colorSensor(){
+        telemetry.addData("Gain", gain);
+        colorSensor.setGain(gain);
+        NormalizedRGBA colors = colorSensor.getNormalizedColors();
+        Color.colorToHSV(colors.toColor(), hsvValues);
+        telemetry.addLine()
+                .addData("Red", "%.3f", colors.red)
+                .addData("Green", "%.3f", colors.green)
+                .addData("Blue", "%.3f", colors.blue);
+        telemetry.addLine()
+                .addData("Hue", "%.3f", hsvValues[0])
+                .addData("Saturation", "%.3f", hsvValues[1])
+                .addData("Value", "%.3f", hsvValues[2]);
+        telemetry.addData("Alpha", "%.3f", colors.alpha);
+        if (colorSensor instanceof DistanceSensor) {
+            telemetry.addData("Distance (cm)", "%.3f", ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM));
+        }
+        telemetry.update();
+        relativeLayout.post(new Runnable() {
+            public void run() {
+                relativeLayout.setBackgroundColor(Color.HSVToColor(hsvValues));
+            }
+        });
+    }
+    protected void runSample() {
+        float gain = 2;
+        final float[] hsvValues = new float[3];
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
+        if (colorSensor instanceof SwitchableLight) {
+            ((SwitchableLight) colorSensor).enableLight(true);
+        }
+    }
+    public void colorSensorLight(){
+        SwitchableLight light = (SwitchableLight)colorSensor;
+        light.enableLight(!light.isLightOn());
+    }
+    public void init_controls(boolean update,boolean auto,boolean color_sensor){
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Control", "");
         telemetry.addData("Control", "");
@@ -104,6 +178,19 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Control", "");
         telemetry.addData("Control", "");
         telemetry.addData("Systems", "Should Be Good To Go");
+        if (color_sensor==true){
+            colorSensorLight();
+            init_colorSensor();
+            try {
+                runSample(); // actually execute the sample
+            } finally {
+                relativeLayout.post(new Runnable() {
+                    public void run() {
+                        relativeLayout.setBackgroundColor(Color.WHITE);
+                    }
+                });
+            }
+        }
         if (update==true){
             telemetry.update();
         }else{
@@ -161,6 +248,8 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     public void init_all(){
         robot.init(hardwareMap);
+        int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
+        relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
         motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
         motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
         motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
