@@ -3,6 +3,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -28,6 +29,7 @@ public class SAMPLEptpov extends LinearOpMode {
     DcMotorSimple motorBackLeft;
     DcMotorSimple motorFrontRight;
     DcMotorSimple motorBackRight;
+    DigitalChannel digitalTouch;
     public double levelRead=0;
     private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
     private static final String[] LABELS = {
@@ -50,18 +52,18 @@ public class SAMPLEptpov extends LinearOpMode {
     private TFObjectDetector tfod;
     @Override
     public void runOpMode() {
-        // Send telemetry message to signify robot waiting;
         initVuforia();
         initTfod();
         init_all();
+        init_controls(true,false);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
         }
-        telemetry.addData("Say", "Hello Driver");    //
         telemetry.update();
         waitForStart();
         while (opModeIsActive()) {
+            init_controls(false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -70,6 +72,7 @@ public class SAMPLEptpov extends LinearOpMode {
             double backLeftPower = (y - x + rx) / denominator;
             double frontRightPower = (y - x - rx) / denominator;
             double backRightPower = (y + x - rx) / denominator;
+            access_pushSensor();
             if (gamepad1.a && slowMode==0){
                 slowMode=1;
             }else if (gamepad1.a && slowMode==1){
@@ -90,6 +93,33 @@ public class SAMPLEptpov extends LinearOpMode {
             }
             run_vu();
             sleep(50);
+        }
+    }
+    public void init_controls(boolean update,boolean auto){
+        telemetry.addData("Hello", "Driver Lookin good today");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+        telemetry.addData("Systems", "Should Be Good To Go");
+        if (update==true){
+            telemetry.update();
+        }else{
+            telemetry.addData("Systems", "Running");
+        }
+        if (auto==false){
+            telemetry.addData("The Force", "Is With You Driver");
+        }else{
+            telemetry.addData("Hope", "Auto Works");
+        }
+    }
+    public void access_pushSensor(){
+        if (digitalTouch.getState()) {
+            telemetry.addData("Digital Touch", "Is Not Pressed");
+        } else {
+            telemetry.addData("Digital Touch", "Is Pressed");
         }
     }
     public void run_vu(){
@@ -135,16 +165,17 @@ public class SAMPLEptpov extends LinearOpMode {
         motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
         motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
         motorBackRight = hardwareMap.dcMotor.get("motorBackRight");
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
         motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
     }
-    private void initVuforia() {
+    public void initVuforia() {
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
     }
-    private void initTfod() {
+    public void initTfod() {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
