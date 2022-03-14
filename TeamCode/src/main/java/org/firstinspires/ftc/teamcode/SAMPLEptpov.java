@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
@@ -24,26 +25,22 @@ public class SAMPLEptpov extends LinearOpMode {
 
     /* Declare OpMode members. */
     HardwarePushbot robot           = new HardwarePushbot();   // Use a Pushbot's hardware
+    double left;
+    double right;
+    double drive;
+    double turn;
+    double max;
+    double slowMode = 0; //0 is off
+    double regular_divider=1;
+    double slowMode_divider=2;
+    DcMotorSimple motorFrontLeft;
+    DcMotorSimple motorBackLeft;
+    DcMotorSimple motorFrontRight;
+    DcMotorSimple motorBackRight;
+    public double power;
 
     @Override
     public void runOpMode() {
-        double left;
-        double right;
-        double drive;
-        double turn;
-        double max;
-        double slowMode = 0; //0 is off
-        double regular_divider=1;
-        double slowMode_divider=2;
-         DcMotor motorFrontLeft;
-         DcMotor motorBackLeft;
-        DcMotor motorFrontRight;
-        DcMotor motorBackRight;
-
-
-
-        robot.init(hardwareMap);
-
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Hello Driver");    //
         telemetry.update();
@@ -53,6 +50,7 @@ public class SAMPLEptpov extends LinearOpMode {
 
 
         while (opModeIsActive()) {
+            robot.init(hardwareMap);
             motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
             motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
             motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
@@ -98,5 +96,12 @@ public class SAMPLEptpov extends LinearOpMode {
             // Pace this loop so jaw action is reasonable speed.
             sleep(50);
         }
+    }
+    public <power> void allPower(power){
+        power=power;
+        motorFrontLeft.setPower(power);
+        motorBackLeft.setPower(power);
+        motorFrontRight.setPower(power);
+        motorBackRight.setPower(power);
     }
 }
