@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
+import org.firstinspires.ftc.robotcontroller.external.samples.SampleRevBlinkinLedDriver;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
@@ -24,6 +25,14 @@ import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import android.content.Context;
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+import java.util.concurrent.TimeUnit;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 @TeleOp(name="Pushbot: Teleop POV", group="Pushbot")
 @Disabled
 public class SAMPLEptpov extends LinearOpMode {
@@ -49,8 +58,24 @@ public class SAMPLEptpov extends LinearOpMode {
     Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
     //rumble
     boolean endgame = false;                 // Use to prevent multiple half-time warning rumbles.
-    Gamepad.RumbleEffect customRumbleEffect;    // Use to build a custom rumble sequence.
+    Gamepad.RumbleEffect customRumbleEffect1;    // Use to build a custom rumble sequence.
+    Gamepad.RumbleEffect customRumbleEffect2;
+    Gamepad.RumbleEffect customRumbleEffect3;
     final double End_Game = 75.0;              // Wait this many seconds before rumble-alert for half-time.
+    //led
+    private final static int LED_PERIOD = 10;//every 10 seconds
+    private final static int GAMEPAD_LOCKOUT = 500;//limit gamepad presses to every 500 ms
+    RevBlinkinLedDriver blinkinLedDriver;
+    RevBlinkinLedDriver.BlinkinPattern pattern;
+    Telemetry.Item patternName;
+    Telemetry.Item display;
+    org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind displayKind;
+    Deadline ledCycleDeadline;
+    Deadline gamepadRateLimit;
+    protected enum DisplayKind {
+        MANUAL,
+        AUTO
+    }
     //vuforia
     public double levelRead=0;
     private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
@@ -70,14 +95,21 @@ public class SAMPLEptpov extends LinearOpMode {
             "ss_light_speed", "ss_mine", "ss_power_up", "ss_r2d2_up", "ss_roger_roger", "ss_siren", "ss_wookie" };
     boolean soundPlaying = false;
     //
+    //gyro
+    ModernRoboticsI2cGyro   gyro    = null;
+    static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
+    static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
+    static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
+    //
     @Override
     public void runOpMode() {
         init_controls(true,false,true,true,
-                true,true,true,true);
+                true,true,true,true,false,false);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
         }
+        defControllers();
         //sound
         int     soundIndex      = 0;
         int     soundID         = -1;
@@ -92,7 +124,7 @@ public class SAMPLEptpov extends LinearOpMode {
         waitForStart();
         while (opModeIsActive()) {
             init_controls(false,false,true,false,
-                    true,true,true,true);
+                    true,true,true,true,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -150,7 +182,7 @@ public class SAMPLEptpov extends LinearOpMode {
             run_vu();
             //endgame init
             if ((runtime.seconds() > End_Game) && !endgame)  {
-                gamepad1.runRumbleEffect(customRumbleEffect);
+                gamepad1.runRumbleEffect(customRumbleEffect1);
                 endgame =true;
             }
             if (!endgame) {
@@ -175,20 +207,33 @@ public class SAMPLEptpov extends LinearOpMode {
         motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
         sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
+        gyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("gyro");
+        gyro.calibrate();
     }
-    public void init_controls(boolean update,boolean auto,boolean color_sensor,boolean initial,
-                              boolean camera,boolean distance,boolean sound,boolean rumble){
+    public void init_controls(boolean update,boolean auto,boolean color_sensor,boolean first,
+                              boolean camera,boolean distance,boolean sound,boolean rumble,boolean LED,boolean gyro){
         telemetry.addData("Hello", "Driver Lookin good today");
-        telemetry.addData("Control", "dpad left = decrease gain (high light enviro)");
-        telemetry.addData("Control", "dpad right = increase gain (low light enviro)");
-        telemetry.addData("Control", "dpad up/down = cycle songs");
-        telemetry.addData("Control", "A = play song");
-        telemetry.addData("Control", "");
-        telemetry.addData("Control", "");
+        showControls(true);
         telemetry.addData("Systems", "Should Be Good To Go");
+        if (gyro){
+            telemetry.addData("Gyro", "Running");
+        }
+        //if (LED){
+        //    init_LED();
+        //    telemetry.addData("LED", "Running");
+        //    handleGamepad();
+        //
+        //    if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
+        //        doAutoDisplay();
+        //    } else {
+        //        /*
+        //         * MANUAL mode: Nothing to do, setting the pattern as a result of a gamepad event.
+        //         */
+        //    }
+        //}
         if (rumble){
             init_rumble();
-            telemetry.addData("Sound", "Running");
+            telemetry.addData("Rumble", "Running");
         }
         if (sound){
             telemetry.addData("Sound", "Running");
@@ -197,7 +242,7 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Distance Sensor", "Running");
             init_distance();
         }
-        if (initial){
+        if (first){
             init_all();
             if(camera){
                 telemetry.addData("Camera", "Running");
@@ -230,14 +275,43 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Systems", "Running");
         }
     }
+    public void showControls(boolean update){
+        telemetry.addData("Control 1", "Driver");
+        telemetry.addData("Control 2", "Other controls");
+        telemetry.addData("Control 2", "dpad left = decrease gain (high light enviro)");
+        telemetry.addData("Control 2", "dpad right = increase gain (low light enviro)");
+        telemetry.addData("Control 2", "dpad up/down = cycle songs");
+        telemetry.addData("Control 2", "A = play song");
+        telemetry.addData("Control", "");
+        telemetry.addData("Control", "");
+    }
+    public void defControllers(){
+        gamepad1.runRumbleEffect(customRumbleEffect3);//1 buzz
+        gamepad2.runRumbleEffect(customRumbleEffect2);//2 buzz
+    }
+    //gyro
+    public void gyro(){
+        telemetry.addData(">", "Robot Heading = %d", gyro.getIntegratedZValue());
+        gyro.resetZAxisIntegrator();
+    }
     //gamepadrumble
     public void init_rumble(){
-        customRumbleEffect = new Gamepad.RumbleEffect.Builder()//rumble2=right side
+        customRumbleEffect1 = new Gamepad.RumbleEffect.Builder()//rumble2=right side
                 .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
                 .addStep(0.0, 0.0, 250)  //  Pause for 300 mSec
                 .addStep(1.0, 1.0, 500)  //  Rumble left motor 100% for 250 mSec
                 .addStep(0.0, 0.0, 250)  //  Pause for 250 mSec
                 .addStep(1.0, 1.0, 500)  //  Rumble left motor 100% for 250 mSec
+                .build();
+        customRumbleEffect2 = new Gamepad.RumbleEffect.Builder()//rumble2=right side
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 250)  //  Pause for 300 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble left motor 100% for 250 mSec
+                .addStep(0.0, 0.0, 250)  //  Pause for 250 mSec
+                .build();
+        customRumbleEffect3 = new Gamepad.RumbleEffect.Builder()//rumble2=right side
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 250)  //  Pause for 300 mSec
                 .build();
     }
     //distance
@@ -365,4 +439,54 @@ public class SAMPLEptpov extends LinearOpMode {
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
     }
+    //Led
+    //public void init_LED(){
+    //    displayKind = SampleRevBlinkinLedDriver.DisplayKind.AUTO;
+    //
+    //    blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+    //    pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
+    //    blinkinLedDriver.setPattern(pattern);
+    //
+    //    display = telemetry.addData("Display Kind: ", displayKind.toString());
+    //    patternName = telemetry.addData("Pattern: ", pattern.toString());
+    //
+    //    ledCycleDeadline = new Deadline(LED_PERIOD, TimeUnit.SECONDS);
+    //    gamepadRateLimit = new Deadline(GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
+    //}
+    //protected void handleGamepad() //{
+    //    if (!gamepadRateLimit.hasExpired()) {
+    //        return;
+    //    }
+    //    if (gamepad1.a) {
+    //        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.MANUAL);
+    //        gamepadRateLimit.reset();
+    //    } else if (gamepad1.b) {
+    //        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
+    //        gamepadRateLimit.reset();
+    //    } else if ((displayKind == SampleRevBlinkinLedDriver.DisplayKind.MANUAL) && (gamepad1.left_bumper)) {
+    //        pattern = pattern.previous();
+    //        displayPattern();
+    //        gamepadRateLimit.reset();
+    //    } else if ((displayKind == SampleRevBlinkinLedDriver.DisplayKind.MANUAL) && (gamepad1.right_bumper)) {
+    //        pattern = pattern.next();
+    //        displayPattern();
+    //        gamepadRateLimit.reset();
+    //    }
+    //}
+    //protected void setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind displayKind) //{
+    //    this.displayKind = displayKind;
+    //    display.setValue(displayKind.toString());
+    //}
+    //protected void doAutoDisplay() {
+    //    if (ledCycleDeadline.hasExpired()) {
+    //        pattern = pattern.next();
+    //        displayPattern();
+    //        ledCycleDeadline.reset();
+    //    }
+    //}
+    //protected void displayPattern() {
+    //    blinkinLedDriver.setPattern(pattern);
+    //    patternName.setValue(pattern.toString());
+    //}
+    //
 }
