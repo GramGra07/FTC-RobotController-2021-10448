@@ -197,6 +197,20 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.update();
         }
     }
+    public void dance(int direction){//-1=back//1=forward
+        if (direction==-1){
+            motorFrontLeft.setPower(-direction-0.2);
+            motorBackLeft.setPower(direction);
+            motorFrontRight.setPower(-direction-0.2);
+            motorBackRight.setPower(direction);
+        }
+        if (direction==1){
+            motorFrontLeft.setPower(direction);
+            motorBackLeft.setPower(-direction-0.2);
+            motorFrontRight.setPower(direction);
+            motorBackRight.setPower(-direction-0.2);
+        }
+    }
     public void init_all(){
         robot.init(hardwareMap);
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
