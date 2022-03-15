@@ -103,8 +103,8 @@ public class SAMPLEptpov extends LinearOpMode {
     //
     @Override
     public void runOpMode() {
-        init_controls(true,false,true,true,
-                true,true,true,true,false,false);
+        init_controls(true,false,false,true,
+                true,false,true,true,false,false);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -123,8 +123,8 @@ public class SAMPLEptpov extends LinearOpMode {
         ElapsedTime runtime = new ElapsedTime();
         waitForStart();
         while (opModeIsActive()) {
-            init_controls(false,false,true,false,
-                    true,true,true,true,false,false);
+            init_controls(false,false,false,false,
+                    true,false,true,true,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -288,6 +288,9 @@ public class SAMPLEptpov extends LinearOpMode {
     public void defControllers(){
         gamepad1.runRumbleEffect(customRumbleEffect3);//1 buzz
         gamepad2.runRumbleEffect(customRumbleEffect2);//2 buzz
+    }
+    public void showFeedback(){
+
     }
     //gyro
     public void gyro(){
