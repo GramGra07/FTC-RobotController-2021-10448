@@ -142,9 +142,9 @@ public class SAMPLEptpov extends LinearOpMode {
             }
             //
             //slowmode
-            if (gamepad1.a && slowMode==0){
+            if (gamepad1.b && slowMode==0){
                 slowMode=1;
-            }else if (gamepad1.a && slowMode==1){
+            }else if (gamepad1.b && slowMode==1){
                 slowMode=0;
             }
             if (slowMode==1){
@@ -160,13 +160,13 @@ public class SAMPLEptpov extends LinearOpMode {
             }
             //
             ////////sound
-            if (gamepad1.dpad_down && !was_dpad_down) {
+            if (gamepad2.dpad_down && !was_dpad_down) {
                 soundIndex = (soundIndex + 1) % sounds.length;
             }
-            if (gamepad1.dpad_up && !was_dpad_up) {
+            if (gamepad2.dpad_up && !was_dpad_up) {
                 soundIndex = (soundIndex + sounds.length - 1) % sounds.length;
             }
-            if (gamepad1.a && !soundPlaying) {
+            if (gamepad2.a && !soundPlaying) {
                 if ((soundID = myApp.getResources().getIdentifier(sounds[soundIndex], "raw", myApp.getPackageName())) != 0){
                     soundPlaying = true;
                     SoundPlayer.getInstance().startPlaying(myApp, soundID, params, null,
@@ -176,13 +176,14 @@ public class SAMPLEptpov extends LinearOpMode {
                                 }} );
                 }
             }
-            was_dpad_up     = gamepad1.dpad_up;
-            was_dpad_down   = gamepad1.dpad_down;
+            was_dpad_up     = gamepad2.dpad_up;
+            was_dpad_down   = gamepad2.dpad_down;
             ////////
             run_vu();
             //endgame init
             if ((runtime.seconds() > End_Game) && !endgame)  {
                 gamepad1.runRumbleEffect(customRumbleEffect1);
+                gamepad2.runRumbleEffect(customRumbleEffect1);
                 endgame =true;
             }
             if (!endgame) {
@@ -190,6 +191,7 @@ public class SAMPLEptpov extends LinearOpMode {
             }
             //
             sleep(50);
+            showFeedback();
             telemetry.addData("Sound >", sounds[soundIndex]);
             telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
             telemetry.update();
@@ -213,7 +215,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public void init_controls(boolean update,boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,boolean LED,boolean gyro){
         telemetry.addData("Hello", "Driver Lookin good today");
-        showControls(true);
+        showControls();
         telemetry.addData("Systems", "Should Be Good To Go");
         if (gyro){
             telemetry.addData("Gyro", "Running");
@@ -275,14 +277,14 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Systems", "Running");
         }
     }
-    public void showControls(boolean update){
+    public void showControls(){
         telemetry.addData("Control 1", "Driver");
         telemetry.addData("Control 2", "Other controls");
+        telemetry.addData("Control 1", "b = slowmode");
         telemetry.addData("Control 2", "dpad left = decrease gain (high light enviro)");
         telemetry.addData("Control 2", "dpad right = increase gain (low light enviro)");
         telemetry.addData("Control 2", "dpad up/down = cycle songs");
         telemetry.addData("Control 2", "A = play song");
-        telemetry.addData("Control", "");
         telemetry.addData("Control", "");
     }
     public void defControllers(){
@@ -290,7 +292,11 @@ public class SAMPLEptpov extends LinearOpMode {
         gamepad2.runRumbleEffect(customRumbleEffect2);//2 buzz
     }
     public void showFeedback(){
-
+        telemetry.addData("direction",  "%.2f", gamepad1.left_stick_y);
+        telemetry.addData("strafe",  "%.2f", gamepad1.left_stick_x);
+        telemetry.addData("right trigger",  "%.2f", gamepad1.right_trigger);
+        telemetry.addData("left trigger",  "%.2f", gamepad1.left_trigger);
+        telemetry.addData("slowMode","%.2f",slowMode);
     }
     //gyro
     public void gyro(){
