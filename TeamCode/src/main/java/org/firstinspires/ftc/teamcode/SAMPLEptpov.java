@@ -15,40 +15,43 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import android.content.Context;
+import com.qualcomm.ftccommon.SoundPlayer;
+import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="Pushbot: Teleop POV", group="Pushbot")
 @Disabled
 public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot           = new HardwarePushbot();   // Use a Pushbot's hardware
-    double left;
-    double right;
-    double drive;
-    double turn;
-    double max;
+    //slowmode
     double slowMode = 0; //0 is off
     double regular_divider=1;
     double slowMode_divider=2;
+    //colorSensor
     float gain=2;
     final float[] hsvValues = new float[3];
     double calibration = 0;//0=off
+    //motors
     DcMotorSimple motorFrontLeft;
     DcMotorSimple motorBackLeft;
     DcMotorSimple motorFrontRight;
     DcMotorSimple motorBackRight;
+    //devices
     DigitalChannel digitalTouch;
     NormalizedColorSensor colorSensor;
     View relativeLayout;
     private DistanceSensor sensorRange;
     Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
+    //rumble
+    boolean endgame = false;                 // Use to prevent multiple half-time warning rumbles.
+    Gamepad.RumbleEffect customRumbleEffect;    // Use to build a custom rumble sequence.
+    final double End_Game = 75.0;              // Wait this many seconds before rumble-alert for half-time.
+    //vuforia
     public double levelRead=0;
     private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
     private static final String[] LABELS = {
@@ -59,27 +62,37 @@ public class SAMPLEptpov extends LinearOpMode {
     };
     private static final String VUFORIA_KEY =
             "AXmzBcj/////AAABme5HSJ/H3Ucup73WSIaV87tx/sFHYaWfor9OZVg6afr2Bw7kNolHd+mF5Ps91SlQpgBHulieI0jcd86kqJSwx46BZ8v8DS5S5x//eQWMEGjMDnvco4/oTcDwuSOLIVZG2UtLmJXPS1L3CipjabePFlqAL2JtBlN78p6ZZbRFSHW680hWEMSimZuQy/cMudD7J/MjMjMs7b925b8BkijlnTQYr7CbSlXrpDh5K+9fLlk2OyEZ4w7tm7e4UJDInJ/T3oi8PqqKCqkUaTkJWlQsvoELbDu5L2FgzsuDhBLe2rHtJRqfORd7n+6M30UdFSsxqq5TaZztkWgzRUr1GC3yBSTS6iFqEuL3g06GrfwOJF0F";
-    /**
-     * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
-     * localization engine.
-     */
     private VuforiaLocalizer vuforia;
-    /**
-     * {@link #tfod} is the variable we will use to store our instance of the TensorFlow Object
-     * Detection engine.
-     */
     private TFObjectDetector tfod;
+    //sounds
+    String  sounds[] =  {"ss_alarm", "ss_bb8_down", "ss_bb8_up", "ss_darth_vader", "ss_fly_by",
+            "ss_mf_fail", "ss_laser", "ss_laser_burst", "ss_light_saber", "ss_light_saber_long", "ss_light_saber_short",
+            "ss_light_speed", "ss_mine", "ss_power_up", "ss_r2d2_up", "ss_roger_roger", "ss_siren", "ss_wookie" };
+    boolean soundPlaying = false;
+    //
     @Override
     public void runOpMode() {
-        init_controls(true,false,true,true,true,true);
+        init_controls(true,false,true,true,
+                true,true,true,true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
         }
-        telemetry.update();
+        //sound
+        int     soundIndex      = 0;
+        int     soundID         = -1;
+        boolean was_dpad_up     = false;
+        boolean was_dpad_down   = false;
+        Context myApp = hardwareMap.appContext;
+        SoundPlayer.PlaySoundParams params = new SoundPlayer.PlaySoundParams();
+        params.loopControl = 0;
+        params.waitForNonLoopingSoundsToFinish = true;
+        //
+        ElapsedTime runtime = new ElapsedTime();
         waitForStart();
         while (opModeIsActive()) {
-            init_controls(false,false,true,false,true,true);
+            init_controls(false,false,true,false,
+                    true,true,true,true);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -107,30 +120,80 @@ public class SAMPLEptpov extends LinearOpMode {
                 backLeftPower /=slowMode_divider;
                 frontRightPower /=slowMode_divider;
                 frontLeftPower /=slowMode_divider;
-                allPower((int) backLeftPower);
             }else{
                 backRightPower /=regular_divider;
                 backLeftPower /=regular_divider;
                 frontRightPower /=regular_divider;
                 frontLeftPower /=regular_divider;
-                allPower((int) backLeftPower);
             }
             //
+            ////////sound
+            if (gamepad1.dpad_down && !was_dpad_down) {
+                soundIndex = (soundIndex + 1) % sounds.length;
+            }
+            if (gamepad1.dpad_up && !was_dpad_up) {
+                soundIndex = (soundIndex + sounds.length - 1) % sounds.length;
+            }
+            if (gamepad1.a && !soundPlaying) {
+                if ((soundID = myApp.getResources().getIdentifier(sounds[soundIndex], "raw", myApp.getPackageName())) != 0){
+                    soundPlaying = true;
+                    SoundPlayer.getInstance().startPlaying(myApp, soundID, params, null,
+                            new Runnable() {
+                                public void run() {
+                                    soundPlaying = false;
+                                }} );
+                }
+            }
+            was_dpad_up     = gamepad1.dpad_up;
+            was_dpad_down   = gamepad1.dpad_down;
+            ////////
             run_vu();
+            //endgame init
+            if ((runtime.seconds() > End_Game) && !endgame)  {
+                gamepad1.runRumbleEffect(customRumbleEffect);
+                endgame =true;
+            }
+            if (!endgame) {
+                telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()) );
+            }
+            //
             sleep(50);
+            telemetry.addData("Sound >", sounds[soundIndex]);
+            telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
+            telemetry.update();
         }
     }
+    public void init_all(){
+        robot.init(hardwareMap);
+        int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
+        relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
+        motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
+        motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
+        motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
+        motorBackRight = hardwareMap.dcMotor.get("motorBackRight");
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
+        motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
+    }
     public void init_controls(boolean update,boolean auto,boolean color_sensor,boolean initial,
-                              boolean camera,boolean distance){
+                              boolean camera,boolean distance,boolean sound,boolean rumble){
         telemetry.addData("Hello", "Driver Lookin good today");
-        telemetry.addData("Control", "");
-        telemetry.addData("Control", "");
-        telemetry.addData("Control", "");
-        telemetry.addData("Control", "");
+        telemetry.addData("Control", "dpad left = decrease gain (high light enviro)");
+        telemetry.addData("Control", "dpad right = increase gain (low light enviro)");
+        telemetry.addData("Control", "dpad up/down = cycle songs");
+        telemetry.addData("Control", "A = play song");
         telemetry.addData("Control", "");
         telemetry.addData("Control", "");
         telemetry.addData("Systems", "Should Be Good To Go");
-        if (distance==true){
+        if (rumble){
+            init_rumble();
+            telemetry.addData("Sound", "Running");
+        }
+        if (sound){
+            telemetry.addData("Sound", "Running");
+        }
+        if (distance){
             telemetry.addData("Distance Sensor", "Running");
             init_distance();
         }
@@ -156,17 +219,28 @@ public class SAMPLEptpov extends LinearOpMode {
                 });
             }
         }
-        if (update){
-            telemetry.update();
-        }else{
-            telemetry.addData("Systems", "Running");
-        }
         if (!auto){
             telemetry.addData("The Force", "Is With You Driver");
         }else{
             telemetry.addData("Hope", "Auto Works");
         }
+        if (update) {
+            telemetry.update();
+        }else{
+            telemetry.addData("Systems", "Running");
+        }
     }
+    //gamepadrumble
+    public void init_rumble(){
+        customRumbleEffect = new Gamepad.RumbleEffect.Builder()//rumble2=right side
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 250)  //  Pause for 300 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble left motor 100% for 250 mSec
+                .addStep(0.0, 0.0, 250)  //  Pause for 250 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble left motor 100% for 250 mSec
+                .build();
+    }
+    //distance
     public void init_distance(){
         telemetry.addData("deviceName",sensorRange.getDeviceName() );
         telemetry.addData("range", String.format("%.01f mm", sensorRange.getDistance(DistanceUnit.MM)));
@@ -176,15 +250,16 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
         telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
     }
+    //color sensor
     public void calibrateColor(boolean on){
         //telemetry.addLine("Higher gain values mean that the sensor
         // will report larger numbers for Red, Green, and Blue, and Value\n");
         if (on) {
             telemetry.addData("In Calibration State", "Press Back to Leave");
             calibration = 1;
-            if (gamepad1.dpad_up) {
+            if (gamepad1.dpad_right) {
                 gain += 0.005;
-            } else if (gamepad1.dpad_down && gain > 1) {
+            } else if (gamepad1.dpad_left && gain > 1) {
                 gain -= 0.005;
             }
         }else if (!on){
@@ -227,6 +302,7 @@ public class SAMPLEptpov extends LinearOpMode {
         SwitchableLight light = (SwitchableLight)colorSensor;
         light.enableLight(!light.isLightOn());
     }
+    //push Sensor
     public void access_pushSensor(){
         if (digitalTouch.getState()) {
             telemetry.addData("Digital Touch", "Is Not Pressed");
@@ -234,6 +310,14 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Digital Touch", "Is Pressed");
         }
     }
+    //all power
+    public void allPower (int power){
+        motorFrontLeft.setPower(power);
+        motorBackLeft.setPower(power);
+        motorFrontRight.setPower(power);
+        motorBackRight.setPower(power);
+    }
+    //vuforia
     public void run_vu(){
         //vuforia
         if (tfod != null) {
@@ -264,25 +348,6 @@ public class SAMPLEptpov extends LinearOpMode {
 
                 }}}
         //////////////ends vuforia
-    }
-    public void allPower (int power){
-        motorFrontLeft.setPower(power);
-        motorBackLeft.setPower(power);
-        motorFrontRight.setPower(power);
-        motorBackRight.setPower(power);
-    }
-    public void init_all(){
-        robot.init(hardwareMap);
-        int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
-        relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
-        motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
-        motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
-        motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
-        motorBackRight = hardwareMap.dcMotor.get("motorBackRight");
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
-        motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
     }
     public void initVuforia() {
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
