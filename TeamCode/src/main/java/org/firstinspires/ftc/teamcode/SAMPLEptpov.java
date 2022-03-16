@@ -227,7 +227,8 @@ public class SAMPLEptpov extends LinearOpMode {
         gyro.calibrate();
     }
     public void init_controls(boolean update,boolean auto,boolean color_sensor,boolean first,
-                              boolean camera,boolean distance,boolean sound,boolean rumble,boolean LED,boolean gyro,boolean light){
+                              boolean camera,boolean distance,boolean sound,boolean rumble,
+                              boolean LED,boolean gyro,boolean light){
         telemetry.addData("Hello", "Driver Lookin good today");
         showControls();
         telemetry.addData("Systems", "Should Be Good To Go");
