@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import org.firstinspires.ftc.robotcontroller.external.samples.SampleRevBlinkinLedDriver;
+import org.firstinspires.ftc.robotcontroller.external.samples.SensorREV2mDistance;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
@@ -46,16 +47,15 @@ public class SAMPLEptpov extends LinearOpMode {
     final float[] hsvValues = new float[3];
     double calibration = 0;//0=off
     //motors
-    DcMotorSimple motorFrontLeft;
-    DcMotorSimple motorBackLeft;
-    DcMotorSimple motorFrontRight;
-    DcMotorSimple motorBackRight;
+    public DcMotor motorFrontLeft = null;
+    public DcMotor motorBackLeft = null;
+    public DcMotor motorFrontRight = null;
+    public DcMotor motorBackRight = null;
     //devices
     DigitalChannel digitalTouch;
     NormalizedColorSensor colorSensor;
     View relativeLayout;
     private DistanceSensor sensorRange;
-    Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
     //rumble
     boolean endgame = false;                 // Use to prevent multiple half-time warning rumbles.
     Gamepad.RumbleEffect customRumbleEffect1;    // Use to build a custom rumble sequence.
@@ -101,14 +101,20 @@ public class SAMPLEptpov extends LinearOpMode {
     static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
     static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
     //
+    //distance
+    public static final DistanceUnit CM = null;
+    public static final DistanceUnit M = null;
+    public static final DistanceUnit IN = null;
+    public static final DistanceUnit MM = null;
     @Override
     public void runOpMode() {
         init_controls(true,false,true,true,
-                false,true,true,true,false,false,false);
+                false,false,true,true,false,false,false);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
         }
+        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
         defControllers();
         //sound
         int     soundIndex      = 0;
@@ -124,7 +130,7 @@ public class SAMPLEptpov extends LinearOpMode {
         waitForStart();
         while (opModeIsActive()) {
             init_controls(false,false,true,false,
-                    false,true,true,true,false,false,false);
+                    false,false,true,true,false,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -340,13 +346,13 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //distance
     public void init_distance(){
-        telemetry.addData("deviceName",sensorRange.getDeviceName() );
+        //telemetry.addData("deviceName",sensorRange.getDeviceName() );
         telemetry.addData("range", String.format("%.01f mm", sensorRange.getDistance(DistanceUnit.MM)));
         telemetry.addData("range", String.format("%.01f cm", sensorRange.getDistance(DistanceUnit.CM)));
         telemetry.addData("range", String.format("%.01f m", sensorRange.getDistance(DistanceUnit.METER)));
         telemetry.addData("range", String.format("%.01f in", sensorRange.getDistance(DistanceUnit.INCH)));
-        telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
-        telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
+        //telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
+        //telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
     }
     //color sensor
     public void calibrateColor(boolean on){
