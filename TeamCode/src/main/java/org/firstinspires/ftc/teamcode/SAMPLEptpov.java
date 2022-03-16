@@ -103,8 +103,8 @@ public class SAMPLEptpov extends LinearOpMode {
     //
     @Override
     public void runOpMode() {
-        init_controls(true,false,false,true,
-                true,false,true,true,false,false);
+        init_controls(true,false,true,true,
+                false,true,true,true,false,false,false);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -123,8 +123,8 @@ public class SAMPLEptpov extends LinearOpMode {
         ElapsedTime runtime = new ElapsedTime();
         waitForStart();
         while (opModeIsActive()) {
-            init_controls(false,false,false,false,
-                    true,false,true,true,false,false);
+            init_controls(false,false,true,false,
+                    false,true,true,true,false,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -227,7 +227,7 @@ public class SAMPLEptpov extends LinearOpMode {
         gyro.calibrate();
     }
     public void init_controls(boolean update,boolean auto,boolean color_sensor,boolean first,
-                              boolean camera,boolean distance,boolean sound,boolean rumble,boolean LED,boolean gyro){
+                              boolean camera,boolean distance,boolean sound,boolean rumble,boolean LED,boolean gyro,boolean light){
         telemetry.addData("Hello", "Driver Lookin good today");
         showControls();
         telemetry.addData("Systems", "Should Be Good To Go");
@@ -267,7 +267,7 @@ public class SAMPLEptpov extends LinearOpMode {
             }
         }
         if (color_sensor){
-            colorSensorLight();
+            colorSensorLight(light);
             init_colorSensor();
             telemetry.addData("Color Sensor", "Running");
             try {
@@ -395,9 +395,11 @@ public class SAMPLEptpov extends LinearOpMode {
             ((SwitchableLight) colorSensor).enableLight(true);
         }
     }
-    public void colorSensorLight(){
+    public void colorSensorLight(boolean on){
         SwitchableLight light = (SwitchableLight)colorSensor;
-        light.enableLight(!light.isLightOn());
+        if (on){
+            light.enableLight(!light.isLightOn());
+        }
     }
     //push Sensor
     public void access_pushSensor(){
