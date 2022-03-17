@@ -151,6 +151,7 @@ public class SAMPLEptpov extends LinearOpMode {
         ElapsedTime runtime = new ElapsedTime();
         waitForStart();
         while (opModeIsActive()) {
+            //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
                     true,true,true,false,false);
