@@ -172,10 +172,12 @@ public class SAMPLEptpov extends LinearOpMode {
             //
             //slowmode
             if (gamepad1.start && gamepad1.back && define==0){
-                defControllers(true);
                 define =1;
             }if (gamepad1.start && gamepad1.back && define==1){
                 define=0;
+            }
+            if (define==1){
+                defControllers(true);
             }
             if (gamepad1.b && slowMode==0){
                 slowMode=1;
