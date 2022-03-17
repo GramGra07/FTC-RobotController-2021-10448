@@ -57,7 +57,7 @@ public class SAMPLEptpov extends LinearOpMode {
     double calibration = 0;//0=off
     //motors
     public DcMotor motorFrontLeft = null;
-    public DcMotor motorBackLeft = null;
+    public DcMotor motorBackLeft  = null;
     public DcMotor motorFrontRight = null;
     public DcMotor motorBackRight = null;
     //devices
@@ -159,8 +159,8 @@ public class SAMPLEptpov extends LinearOpMode {
             double rx = gamepad1.right_stick_x;
             double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
             double frontLeftPower = (y + x + rx) / denominator;
-            double backLeftPower = (y - x + rx) / denominator;
-            double frontRightPower = (y - x - rx) / denominator;
+            double backLeftPower  = (y - x + rx) / denominator;
+            double frontRightPower= (y - x - rx) / denominator;
             double backRightPower = (y + x - rx) / denominator;
             access_pushSensor();
             //calibration
@@ -189,8 +189,8 @@ public class SAMPLEptpov extends LinearOpMode {
                 frontLeftPower /=slowMode_divider;
             }else{
                 backRightPower /=regular_divider;
-                backLeftPower /=regular_divider;
-                frontRightPower /=regular_divider;
+                backLeftPower  /=regular_divider;
+                frontRightPower/=regular_divider;
                 frontLeftPower /=regular_divider;
             }
             //
@@ -223,6 +223,10 @@ public class SAMPLEptpov extends LinearOpMode {
                 telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()) );
             }
             //
+            motorFrontLeft .setPower(frontLeftPower );
+            motorBackLeft  .setPower(backLeftPower  );
+            motorFrontRight.setPower(frontRightPower);
+            motorBackRight .setPower(backRightPower );
             sleep(50);
             telemetry.addData("Sound >", sounds[soundIndex]);
             telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
