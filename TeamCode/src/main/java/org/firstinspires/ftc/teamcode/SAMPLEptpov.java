@@ -440,7 +440,7 @@ public class SAMPLEptpov extends LinearOpMode {
     //}
     public void init_colorSensor(){
         //telemetry.addData("Gain", gain);
-        //colorSensor.setGain(gain);
+        colorSensor.setGain(1);
         
         relativeLayout.post(new Runnable() {
             public void run() {
