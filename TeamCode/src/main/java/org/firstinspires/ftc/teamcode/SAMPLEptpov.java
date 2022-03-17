@@ -115,6 +115,9 @@ public class SAMPLEptpov extends LinearOpMode {
     public static final DistanceUnit M = null;
     public static final DistanceUnit IN = null;
     public static final DistanceUnit MM = null;
+    //
+    //variable
+    public double define = 0; // 0 = off
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -135,7 +138,6 @@ public class SAMPLEptpov extends LinearOpMode {
             tfod.setZoom(1, 16.0 / 9.0);
         }
         Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
-        defControllers();
         //sound
         int     soundIndex      = 0;
         int     soundID         = -1;
@@ -169,6 +171,12 @@ public class SAMPLEptpov extends LinearOpMode {
             //}
             //
             //slowmode
+            if (gamepad1.start && gamepad1.back && define==0){
+                defControllers(true);
+                define =1;
+            }if (gamepad1.start && gamepad1.back && define==1){
+                define=0;
+            }
             if (gamepad1.b && slowMode==0){
                 slowMode=1;
             }else if (gamepad1.b && slowMode==1){
@@ -209,11 +217,7 @@ public class SAMPLEptpov extends LinearOpMode {
             run_vu();
             //endgame init
             if ((runtime.seconds() > End_Game) && !endgame)  {
-                gamepad1.runRumbleEffect(customRumbleEffect1);
-                gamepad2.runRumbleEffect(customRumbleEffect1);
-                endgame =true;
-                endGame();
-                relativeLayout.setBackgroundColor(0);
+                endGame(true);
             }
             if (!endgame) {
                 telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()) );
@@ -225,8 +229,22 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.update();
         }
     }
-    public void endGame(){
-
+    public void endGame(boolean flash){
+        gamepad1.runRumbleEffect(customRumbleEffect1);
+        gamepad2.runRumbleEffect(customRumbleEffect1);
+        endgame =true;
+        if (flash){
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+        }
     }
     public void runSample() {
         //float gain=2;
@@ -326,9 +344,21 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Control 2", "A = play song");
         telemetry.addData("Control", "");
     }
-    public void defControllers(){
+    public void defControllers(boolean flash){
         gamepad1.runRumbleEffect(customRumbleEffect3);//1 buzz
         gamepad2.runRumbleEffect(customRumbleEffect2);//2 buzz
+        if (flash){
+            if (gamepad1.start){
+                relativeLayout.setBackgroundColor(0);
+                relativeLayout.setBackgroundColor(10);
+            }
+            if (gamepad2.start){
+                relativeLayout.setBackgroundColor(0);
+                relativeLayout.setBackgroundColor(10);
+                relativeLayout.setBackgroundColor(0);
+                relativeLayout.setBackgroundColor(10);
+            }
+        }
     }
     public void showFeedback(){
         telemetry.addData("direction",  "%.2f", gamepad1.left_stick_y);
