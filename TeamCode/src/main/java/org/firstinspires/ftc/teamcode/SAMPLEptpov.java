@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
+import org.firstinspires.ftc.teamcode.HardwarePushbot;
 import org.firstinspires.ftc.robotcontroller.external.samples.SampleRevBlinkinLedDriver;
 import org.firstinspires.ftc.robotcontroller.external.samples.SensorREV2mDistance;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -34,7 +34,7 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-@TeleOp(name="Pushbot: Teleop POV", group="Pushbot")
+@TeleOp(name="SamplePTPOV", group="Pushbot")
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot           = new HardwarePushbot();   // Use a Pushbot's hardware
@@ -221,10 +221,10 @@ public class SAMPLEptpov extends LinearOpMode {
         robot.init(hardwareMap);
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
         relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
-        motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
-        motorBackLeft = hardwareMap.dcMotor.get("motorBackLeft");
-        motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
-        motorBackRight = hardwareMap.dcMotor.get("motorBackRight");
+        motorFrontLeft = hardwareMap.get(DcMotor.class,"motorFrontLeft");
+        motorBackLeft = hardwareMap.get(DcMotor.class,"motorBackLeft");
+        motorFrontRight = hardwareMap.get(DcMotor.class,"motorFrontRight");
+        motorBackRight = hardwareMap.get(DcMotor.class,"motorBackRight");
         digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
         motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
