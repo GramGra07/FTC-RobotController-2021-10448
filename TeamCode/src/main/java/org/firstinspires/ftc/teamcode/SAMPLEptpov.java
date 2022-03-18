@@ -117,7 +117,15 @@ public class SAMPLEptpov extends LinearOpMode {
     public static final DistanceUnit MM = null;
     //
     //variable
-    public double define = 0; // 0 = off
+    public double define = 0; // 0 = off1
+    //encoders
+    static final double     COUNTS_PER_MOTOR_REV    = 1200 ;    // eg: TETRIX Motor Encoder
+    static final double     DRIVE_GEAR_REDUCTION    = 20 ;     // This is < 1.0 if geared UP
+    static final double     WHEEL_DIAMETER_INCHES   = 4.6950 ;     // For figuring circumference
+    static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+            (WHEEL_DIAMETER_INCHES * 3.1415);
+    static final double     DRIVE_SPEED             = 0.6;
+    static final double     TURN_SPEED              = 0.5;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -132,7 +140,7 @@ public class SAMPLEptpov extends LinearOpMode {
             });
         }
         init_controls(false,true,true,false,
-                false,true,true,false,false);
+                false,true,true,false,false,false);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -148,13 +156,15 @@ public class SAMPLEptpov extends LinearOpMode {
         params.loopControl = 0;
         params.waitForNonLoopingSoundsToFinish = true;
         //
+        //
         ElapsedTime runtime = new ElapsedTime();
         waitForStart();
         while (opModeIsActive()) {
+
             //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
-                    false,true,true,false,false);
+                    false,true,true,false,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -290,9 +300,15 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     public void init_controls(boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,
-                              boolean LED,boolean gyro){
+                              boolean LED,boolean gyro,boolean encoder){
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
+        if (auto){
+            if (encoder){
+                resetEncoder();
+                telemetry.addData("Encoders", "Running");
+            }
+        }
         if (gyro){
             telemetry.addData("Gyro", "Running");
         }
@@ -387,6 +403,63 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addData("Saturation", "%.3f", hsvValues[1])
                 .addData("Value", "%.3f", hsvValues[2]);
         telemetry.addData("Alpha", "%.3f", colors.alpha);
+    }
+    //ENCODER
+    public void resetEncoder(){
+        telemetry.addData("Status", "Resetting Encoders");    //
+        robot.motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.motorBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.motorFrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.motorFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.motorBackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.motorFrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.motorFrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.motorBackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        telemetry.addData("Path0",  "Starting at %7d :%7d",
+                robot.motorFrontRight.getCurrentPosition(),
+                robot.motorFrontLeft.getCurrentPosition(),
+                robot.motorBackLeft.getCurrentPosition(),
+                robot.motorBackRight.getCurrentPosition());
+    }
+    public void encoderDrive(double speed,
+                             double leftInches, double rightInches,
+                             double timeoutS) {
+        int newLeftTarget;
+        int newRightTarget;
+        if (opModeIsActive()) {
+            newLeftTarget = robot.motorFrontLeft.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
+            newRightTarget = robot.motorFrontRight.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+            robot.motorFrontLeft .setTargetPosition(-2);
+            robot.motorFrontRight.setTargetPosition(-2);
+            robot.motorBackLeft  .setTargetPosition(-2);
+            robot.motorBackRight .setTargetPosition(-2);
+            robot.motorFrontLeft .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.motorFrontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.motorBackLeft  .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.motorBackRight .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.motorFrontLeft .setPower(Math.abs(speed));
+            robot.motorFrontRight.setPower(Math.abs(speed));
+            robot.motorBackLeft  .setPower(Math.abs(speed));
+            robot.motorBackRight .setPower(Math.abs(speed));
+            while (opModeIsActive() &&
+                    (robot.motorFrontRight.isBusy() && robot.motorBackRight.isBusy()
+                            && robot.motorBackLeft.isBusy() && robot.motorFrontLeft.isBusy())) {
+                telemetry.addData("Path1",  "Running to %7d :%7d", newLeftTarget,  newRightTarget);
+                telemetry.addData("Path2",  "Running at %7d :%7d",
+                        robot.motorFrontLeft .getCurrentPosition(),
+                        robot.motorFrontRight.getCurrentPosition(),
+                        robot.motorBackLeft  .getCurrentPosition(),
+                        robot.motorBackRight .getCurrentPosition());
+            }
+            robot.motorFrontLeft .setPower(0);
+            robot.motorFrontRight.setPower(0);
+            robot.motorBackLeft  .setPower(0);
+            robot.motorBackRight .setPower(0);
+            robot.motorFrontLeft .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.motorFrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.motorBackLeft  .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.motorBackRight .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
     }
     //gyro
     public void gyro(){
