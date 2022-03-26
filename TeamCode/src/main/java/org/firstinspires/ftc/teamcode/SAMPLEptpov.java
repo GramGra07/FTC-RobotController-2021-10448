@@ -111,10 +111,10 @@ public class SAMPLEptpov extends LinearOpMode {
     static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
     //
     //distance
-    public static final DistanceUnit CM = null;
-    public static final DistanceUnit M = null;
-    public static final DistanceUnit IN = null;
-    public static final DistanceUnit MM = null;
+    //public static final DistanceUnit CM = null;
+    //public static final DistanceUnit M = null;
+    //public static final DistanceUnit IN = null;
+    //public static final DistanceUnit MM = null;
     //
     //variable
     public double define = 0; // 0 = off1
@@ -140,7 +140,7 @@ public class SAMPLEptpov extends LinearOpMode {
             });
         }
         init_controls(false,true,true,false,
-                false,true,true,false,false,false);
+                true,true,true,false,false,false);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -164,7 +164,7 @@ public class SAMPLEptpov extends LinearOpMode {
             //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
-                    false,true,true,false,false,false);
+                    true,true,true,false,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -361,8 +361,6 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Control 1", "Driver");
         telemetry.addData("Control 2", "Other controls");
         telemetry.addData("Control 1", "b = slowmode");
-        telemetry.addData("Control 2", "dpad left = decrease gain (high light enviro)");
-        telemetry.addData("Control 2", "dpad right = increase gain (low light enviro)");
         telemetry.addData("Control 2", "dpad up/down = cycle songs");
         telemetry.addData("Control 2", "A = play song");
         telemetry.addData("Control", "");
@@ -489,10 +487,10 @@ public class SAMPLEptpov extends LinearOpMode {
     //distance
     public void init_distance(){
         //telemetry.addData("deviceName",sensorRange.getDeviceName() );
-        telemetry.addData("range", String.format("%.01f mm", sensorRange.getDistance(DistanceUnit.MM)));
+        //telemetry.addData("range", String.format("%.01f mm", sensorRange.getDistance(DistanceUnit.MM)));
         telemetry.addData("range", String.format("%.01f cm", sensorRange.getDistance(DistanceUnit.CM)));
-        telemetry.addData("range", String.format("%.01f m", sensorRange.getDistance(DistanceUnit.METER)));
-        telemetry.addData("range", String.format("%.01f in", sensorRange.getDistance(DistanceUnit.INCH)));
+        //telemetry.addData("range", String.format("%.01f m", sensorRange.getDistance(DistanceUnit.METER)));
+        //telemetry.addData("range", String.format("%.01f in", sensorRange.getDistance(DistanceUnit.INCH)));
         //telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
         //telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
     }
@@ -514,7 +512,7 @@ public class SAMPLEptpov extends LinearOpMode {
     //}
     public void init_colorSensor(){
         //telemetry.addData("Gain", gain);
-        colorSensor.setGain(1);
+        colorSensor.setGain(5);
         
         relativeLayout.post(new Runnable() {
             public void run() {
