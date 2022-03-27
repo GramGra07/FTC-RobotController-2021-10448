@@ -4,9 +4,11 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import org.firstinspires.ftc.teamcode.HardwarePushbot;
 import org.firstinspires.ftc.robotcontroller.external.samples.SampleRevBlinkinLedDriver;
 import org.firstinspires.ftc.robotcontroller.external.samples.SensorREV2mDistance;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
@@ -15,16 +17,13 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import java.util.List;
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
@@ -64,7 +63,7 @@ public class SAMPLEptpov extends LinearOpMode {
     DigitalChannel digitalTouch;
     NormalizedColorSensor colorSensor;
     View relativeLayout;
-    private DistanceSensor sensorRange;
+    DistanceSensor sensorRange;
     //rumble
     boolean endgame = false;                 // Use to prevent multiple half-time warning rumbles.
     Gamepad.RumbleEffect customRumbleEffect1;    // Use to build a custom rumble sequence.
@@ -111,10 +110,10 @@ public class SAMPLEptpov extends LinearOpMode {
     static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
     //
     //distance
-    //public static final DistanceUnit CM = null;
-    //public static final DistanceUnit M = null;
-    //public static final DistanceUnit IN = null;
-    //public static final DistanceUnit MM = null;
+    public double MM_distance=0;
+    public double CM_distance=0;
+    public double M_distance=0;
+    public double IN_distance=0;
     //
     //variable
     public double define = 0; // 0 = off1
@@ -151,6 +150,7 @@ public class SAMPLEptpov extends LinearOpMode {
         int     soundID         = -1;
         boolean was_dpad_up     = false;
         boolean was_dpad_down   = false;
+        boolean was_B_down   = false;
         Context myApp = hardwareMap.appContext;
         SoundPlayer.PlaySoundParams params = new SoundPlayer.PlaySoundParams();
         params.loopControl = 0;
@@ -160,7 +160,6 @@ public class SAMPLEptpov extends LinearOpMode {
         ElapsedTime runtime = new ElapsedTime();
         waitForStart();
         while (opModeIsActive()) {
-
             //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
@@ -173,18 +172,10 @@ public class SAMPLEptpov extends LinearOpMode {
             double backLeftPower  = (y - x + rx) / denominator;
             double frontRightPower= (y - x - rx) / denominator;
             double backRightPower = (y + x - rx) / denominator;
-            access_pushSensor();
-            //calibration
-            //if (gamepad1.back && calibration==0){
-            //    calibrateColor(true);
-            //}else if (gamepad1.back && calibration==1){
-            //    calibrateColor(false);
-            //}
-            //
             //slowmode
-            if (gamepad1.start && gamepad1.back && define==0){
+            if (gamepad1.start && gamepad1.back && define==0 && !was_B_down){
                 define =1;
-            }if (gamepad1.start && gamepad1.back && define==1){
+            }if (gamepad1.start && gamepad1.back && define==1 && !was_B_down){
                 define=0;
             }
             if (define==1){
@@ -226,6 +217,7 @@ public class SAMPLEptpov extends LinearOpMode {
             }
             was_dpad_up     = gamepad1.dpad_up;
             was_dpad_down   = gamepad1.dpad_down;
+            was_B_down   = gamepad1.b;
             ////////
             run_vu();
             //endgame init
@@ -241,6 +233,8 @@ public class SAMPLEptpov extends LinearOpMode {
             motorFrontRight.setPower(frontRightPower);
             motorBackRight .setPower(backRightPower );
             sleep(50);
+            telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
+            telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
             telemetry.addData("Sound >", sounds[soundIndex]);
             telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
             telemetry.update();
@@ -334,7 +328,6 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         if (distance){
             telemetry.addData("Distance Sensor", "Running");
-            init_distance();
         }
         if (first){
             init_all();
@@ -401,6 +394,8 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addData("Saturation", "%.3f", hsvValues[1])
                 .addData("Value", "%.3f", hsvValues[2]);
         telemetry.addData("Alpha", "%.3f", colors.alpha);
+        access_pushSensor();
+        getDistance();
     }
     //ENCODER
     public void resetEncoder(){
@@ -485,14 +480,29 @@ public class SAMPLEptpov extends LinearOpMode {
                 .build();
     }
     //distance
-    public void init_distance(){
-        //telemetry.addData("deviceName",sensorRange.getDeviceName() );
-        //telemetry.addData("range", String.format("%.01f mm", sensorRange.getDistance(DistanceUnit.MM)));
-        telemetry.addData("range", String.format("%.01f cm", sensorRange.getDistance(DistanceUnit.CM)));
-        //telemetry.addData("range", String.format("%.01f m", sensorRange.getDistance(DistanceUnit.METER)));
-        //telemetry.addData("range", String.format("%.01f in", sensorRange.getDistance(DistanceUnit.INCH)));
-        //telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
-        //telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
+    public void getDistance(){
+        MM_distance= sensorRange.getDistance(DistanceUnit.MM);
+        CM_distance= sensorRange.getDistance(DistanceUnit.CM);
+        M_distance= sensorRange.getDistance(DistanceUnit.METER);
+        IN_distance= sensorRange.getDistance(DistanceUnit.INCH);
+        verifyDistance();
+    }
+    public void verifyDistance(){
+        if (MM_distance*10 !=CM_distance){
+            telemetry.addData("DISTANCE","ERROR");
+        }else if (CM_distance*10 !=M_distance){
+            telemetry.addData("DISTANCE","ERROR");
+        } else if (IN_distance*0.393701 !=CM_distance){
+            telemetry.addData("DISTANCE","ERROR");
+        } else{
+            giveDistances();
+        }
+    }
+    public void giveDistances(){
+        telemetry.addData("range", String.format("%.0001f cm",MM_distance));
+        telemetry.addData("range", String.format("%.0001f cm",CM_distance));
+        telemetry.addData("range", String.format("%.0001f cm",M_distance));
+        telemetry.addData("range", String.format("%.0001f cm",IN_distance));
     }
     //color sensor
     //public void calibrateColor(boolean on){
