@@ -490,7 +490,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public void verifyDistance(){
         if (MM_distance*10 !=CM_distance){
             telemetry.addData("DISTANCE","ERROR");
-        }else if (CM_distance*10 !=M_distance){
+        }else if (CM_distance*100 !=M_distance){
             telemetry.addData("DISTANCE","ERROR");
         } else if (IN_distance*0.393701 !=CM_distance){
             telemetry.addData("DISTANCE","ERROR");
