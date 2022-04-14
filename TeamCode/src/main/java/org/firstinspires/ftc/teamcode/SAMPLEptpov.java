@@ -115,6 +115,8 @@ public class SAMPLEptpov extends LinearOpMode {
     public double M_distance=0;
     public double IN_distance=0;
     //
+    public double degree_mult = 0.00277777777;
+    public String name = '0';
     //variable
     public double define = 0; // 0 = off1
     //encoders
@@ -394,8 +396,17 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addData("Saturation", "%.3f", hsvValues[1])
                 .addData("Value", "%.3f", hsvValues[2]);
         telemetry.addData("Alpha", "%.3f", colors.alpha);
+        get_color_name(colors.red,colors.green,colors.blue);
+        telemetry.addData("Color",name);
         access_pushSensor();
         getDistance();
+    }
+    //colors
+    public void get_color_name(red,green,blue){
+        if ((red<=256) && (red >=240)&& (green<=256)&&(green>=222) && (blue<=256)&&(blue>=173)){
+            name='white';
+        }
+        return name
     }
     //ENCODER
     public void resetEncoder(){
@@ -453,6 +464,10 @@ public class SAMPLEptpov extends LinearOpMode {
             robot.motorBackLeft  .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.motorBackRight .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
+    }
+    public void setServo(int degrees){
+        position = degree_mult * degrees
+        return position
     }
     //gyro
     public void gyro(){
