@@ -490,7 +490,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Color",name);
         access_pushSensor();
         getDistance();
-        composeTelemetry();
+        //composeTelemetry();//imu
     }
     //colors
     public void get_color_name(float red,float green,float blue){
