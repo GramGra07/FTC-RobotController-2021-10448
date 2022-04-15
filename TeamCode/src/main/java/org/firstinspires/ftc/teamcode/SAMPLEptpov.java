@@ -116,8 +116,6 @@ public class SAMPLEptpov extends LinearOpMode {
             "ss_light_speed", "ss_mine", "ss_power_up", "ss_r2d2_up", "ss_roger_roger", "ss_siren", "ss_wookie" };
     boolean soundPlaying = false;
     //
-    //gyro
-    ModernRoboticsI2cGyro   gyro    = null;
     static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
     static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
     static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
@@ -160,7 +158,7 @@ public class SAMPLEptpov extends LinearOpMode {
             });
         }
         init_controls(false,true,true,false,
-                true,true,true,false,false,false,true);
+                true,true,true,false,false,true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -184,7 +182,7 @@ public class SAMPLEptpov extends LinearOpMode {
             //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
-                    true,true,true,false,false,false,false);
+                    true,true,true,false,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -385,12 +383,10 @@ public class SAMPLEptpov extends LinearOpMode {
         motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
         sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
-        gyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("gyro");
-        gyro.calibrate();
     }
     public void init_controls(boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,
-                              boolean LED,boolean gyro,boolean encoder,boolean imu){
+                              boolean LED,boolean encoder,boolean imu){
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
         if (auto){
@@ -401,9 +397,6 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         if (imu){
             imu();
-        }
-        if (gyro){
-            telemetry.addData("Gyro", "Running");
         }
         //if (LED){
         //    init_LED();
@@ -574,11 +567,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public void setServo(int degrees){
         position = degree_mult * degrees;
     }
-    //gyro
-    public void gyro(){
-        telemetry.addData(">", "Robot Heading = %d", gyro.getIntegratedZValue());
-        gyro.resetZAxisIntegrator();
-    }
+
     //gamepadrumble
     public void init_rumble(){
         customRumbleEffect1 = new Gamepad.RumbleEffect.Builder()//rumble2=right side
