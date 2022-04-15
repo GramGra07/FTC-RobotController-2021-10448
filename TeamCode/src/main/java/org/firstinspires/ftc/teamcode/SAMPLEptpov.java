@@ -4,6 +4,17 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import java.util.Locale;
 import org.firstinspires.ftc.robotcontroller.external.samples.SampleRevBlinkinLedDriver;
 import org.firstinspires.ftc.robotcontroller.external.samples.SensorREV2mDistance;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -59,6 +70,8 @@ public class SAMPLEptpov extends LinearOpMode {
     public DcMotor motorBackLeft  = null;
     public DcMotor motorFrontRight = null;
     public DcMotor motorBackRight = null;
+
+    public double position=0;
     //devices
     DigitalChannel digitalTouch;
     NormalizedColorSensor colorSensor;
@@ -115,8 +128,11 @@ public class SAMPLEptpov extends LinearOpMode {
     public double M_distance=0;
     public double IN_distance=0;
     //
+    public int redVal  =0;
+    public int greenVal=0;
+    public int blueVal =0;
     public double degree_mult = 0.00277777777;
-    public String name = '0';
+    public String name = "string";
     //variable
     public double define = 0; // 0 = off1
     //encoders
@@ -127,6 +143,9 @@ public class SAMPLEptpov extends LinearOpMode {
             (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double     DRIVE_SPEED             = 0.6;
     static final double     TURN_SPEED              = 0.5;
+    BNO055IMU imu;
+    Orientation angles;
+    Acceleration gravity;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -141,7 +160,7 @@ public class SAMPLEptpov extends LinearOpMode {
             });
         }
         init_controls(false,true,true,false,
-                true,true,true,false,false,false);
+                true,true,true,false,false,false,true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -158,14 +177,14 @@ public class SAMPLEptpov extends LinearOpMode {
         params.loopControl = 0;
         params.waitForNonLoopingSoundsToFinish = true;
         //
-        //
         ElapsedTime runtime = new ElapsedTime();
         waitForStart();
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
         while (opModeIsActive()) {
             //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
-                    true,true,true,false,false,false);
+                    true,true,true,false,false,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -242,6 +261,81 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.update();
         }
     }
+    public void imu(){
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+    }
+    void composeTelemetry() {
+
+        // At the beginning of each telemetry update, grab a bunch of data
+        // from the IMU that we will then display in separate lines.
+        telemetry.addAction(new Runnable() { @Override public void run()
+        {
+            // Acquiring the angles is relatively expensive; we don't want
+            // to do that in each of the three items that need that info, as that's
+            // three times the necessary expense.
+            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            gravity  = imu.getGravity();
+        }
+        });
+
+        telemetry.addLine()
+                .addData("status", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getSystemStatus().toShortString();
+                    }
+                })
+                .addData("calib", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getCalibrationStatus().toString();
+                    }
+                });
+
+        telemetry.addLine()
+                .addData("heading", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(angles.angleUnit, angles.firstAngle);
+                    }
+                })
+                .addData("roll", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(angles.angleUnit, angles.secondAngle);
+                    }
+                })
+                .addData("pitch", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(angles.angleUnit, angles.thirdAngle);
+                    }
+                });
+
+        telemetry.addLine()
+                .addData("grvty", new Func<String>() {
+                    @Override public String value() {
+                        return gravity.toString();
+                    }
+                })
+                .addData("mag", new Func<String>() {
+                    @Override public String value() {
+                        return String.format(Locale.getDefault(), "%.3f",
+                                Math.sqrt(gravity.xAccel*gravity.xAccel
+                                        + gravity.yAccel*gravity.yAccel
+                                        + gravity.zAccel*gravity.zAccel));
+                    }
+                });
+    }
+    String formatAngle(AngleUnit angleUnit, double angle) {
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
+    String formatDegrees(double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
     public void endGame(boolean flash){
         gamepad1.runRumbleEffect(customRumbleEffect1);
         gamepad2.runRumbleEffect(customRumbleEffect1);
@@ -296,7 +390,7 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     public void init_controls(boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,
-                              boolean LED,boolean gyro,boolean encoder){
+                              boolean LED,boolean gyro,boolean encoder,boolean imu){
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
         if (auto){
@@ -304,6 +398,9 @@ public class SAMPLEptpov extends LinearOpMode {
                 resetEncoder();
                 telemetry.addData("Encoders", "Running");
             }
+        }
+        if (imu){
+            imu();
         }
         if (gyro){
             telemetry.addData("Gyro", "Running");
@@ -382,9 +479,9 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("right trigger",  "%.2f", gamepad1.right_trigger);
         telemetry.addData("left trigger",  "%.2f", gamepad1.left_trigger);
         telemetry.addData("slowMode","%.2f",slowMode);
-        if (colorSensor instanceof DistanceSensor) {
-            telemetry.addData("Color Distance (cm)", "%.3f", ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM));
-        }
+        //if (colorSensor instanceof DistanceSensor) {
+        //    telemetry.addData("Color Distance (cm)", "%.3f", ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM));
+        //}
         NormalizedRGBA colors = colorSensor.getNormalizedColors();
         Color.colorToHSV(colors.toColor(), hsvValues);
         telemetry.addLine()
@@ -400,13 +497,22 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Color",name);
         access_pushSensor();
         getDistance();
+        composeTelemetry();
     }
     //colors
-    public void get_color_name(red,green,blue){
-        if ((red<=256) && (red >=240)&& (green<=256)&&(green>=222) && (blue<=256)&&(blue>=173)){
-            name='white';
+    public void get_color_name(float red,float green,float blue){
+        if ((red<=1) && (red >=0.9375)&& (green<=1)&&(green>=0.8671875) && (blue<=1)&&(blue>=0.67578125)){
+            name="white";
         }
-        return name
+        if ((red<=0.5) && (red >=0)&& (green<=1)&&(green>=0.59765625) && (blue<=1)&&(blue>=0.44921875)){
+            name="blue";
+        }
+        if ((red<=0.5) && (red >=0)&& (green<=0.5)&&(green>=0) && (blue<=0.5)&&(blue>=0)){
+            name="black";
+        }
+        if ((red<=1) && (red >=0.3984375)&& (green<=0.234375)&&(green>=0) && (blue<=0.5)&&(blue>=0)){
+            name="red";
+        }
     }
     //ENCODER
     public void resetEncoder(){
@@ -466,8 +572,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
     public void setServo(int degrees){
-        position = degree_mult * degrees
-        return position
+        position = degree_mult * degrees;
     }
     //gyro
     public void gyro(){
@@ -500,24 +605,25 @@ public class SAMPLEptpov extends LinearOpMode {
         CM_distance= sensorRange.getDistance(DistanceUnit.CM);
         M_distance= sensorRange.getDistance(DistanceUnit.METER);
         IN_distance= sensorRange.getDistance(DistanceUnit.INCH);
-        verifyDistance();
+        //verifyDistance();
+        giveDistances();
     }
     public void verifyDistance(){
         if (MM_distance*10 !=CM_distance){
             telemetry.addData("DISTANCE","ERROR");
         }else if (CM_distance*100 !=M_distance){
             telemetry.addData("DISTANCE","ERROR");
-        } else if (IN_distance*0.393701 !=CM_distance){
-            telemetry.addData("DISTANCE","ERROR");
+        //} else if (IN_distance*0.393701 !=CM_distance){
+         //   telemetry.addData("DISTANCE","ERROR");
         } else{
             giveDistances();
         }
     }
     public void giveDistances(){
-        telemetry.addData("range", String.format("%.0001f cm",MM_distance));
-        telemetry.addData("range", String.format("%.0001f cm",CM_distance));
-        telemetry.addData("range", String.format("%.0001f cm",M_distance));
-        telemetry.addData("range", String.format("%.0001f cm",IN_distance));
+        telemetry.addData("distance", String.format("%.0001f mm",MM_distance));
+        telemetry.addData("distance", String.format("%.0001f cm",CM_distance));
+        telemetry.addData("distance", String.format("%.0001f m",M_distance));
+        telemetry.addData("distance", String.format("%.0001f in",IN_distance));
     }
     //color sensor
     //public void calibrateColor(boolean on){
@@ -537,7 +643,7 @@ public class SAMPLEptpov extends LinearOpMode {
     //}
     public void init_colorSensor(){
         //telemetry.addData("Gain", gain);
-        colorSensor.setGain(5);
+        colorSensor.setGain(10);
         
         relativeLayout.post(new Runnable() {
             public void run() {
