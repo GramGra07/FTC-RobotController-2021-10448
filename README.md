@@ -1,5 +1,4 @@
-# I was able to join easily as a collaborator.  I will push these changes to your repo to see what happens on your end.
-
+Repo for 10448 2021-2022 and includes sample code for 2022-2023
 ----
 ## NOTICE
 
