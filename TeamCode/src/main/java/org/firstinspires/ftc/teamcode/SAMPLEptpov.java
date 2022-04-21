@@ -72,6 +72,8 @@ public class SAMPLEptpov extends LinearOpMode {
     public DcMotor motorBackRight = null;
 
     public double position=0;
+    boolean inRange=false;
+    boolean updated_inRange=false;
     //devices
     DigitalChannel digitalTouch;
     NormalizedColorSensor colorSensor;
@@ -258,6 +260,43 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
             telemetry.update();
         }
+    }
+    public void inRange(int sensor,int max,int min,String unit){
+        if (sensor==1){
+            getDistance(false);
+            if (unit == "cm"){
+                if (CM_distance>=min && CM_distance<=max){
+                    inRange=true;
+                }
+            }
+            else if (unit == "mm"){
+                if (MM_distance>=min && MM_distance<=max){
+                    inRange=true;
+                }
+            }
+            else if (unit == "in"){
+                if (IN_distance>=min && IN_distance<=max){
+                    inRange=true;
+                }
+            }
+            else if (unit == "m"){
+                if (M_distance>=min && M_distance<=max){
+                    inRange=true;
+                }
+            }
+            else{
+                inRange=false;
+            }
+        }
+        updateRangeTo(inRange);
+    }
+    public void updateRangeTo(boolean condition){
+        updated_inRange= condition;
+        inRange=false;
+    }
+    public void resetRange(){
+        updated_inRange= false;
+        inRange=false;
     }
     public void imu(){
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -489,7 +528,7 @@ public class SAMPLEptpov extends LinearOpMode {
         get_color_name(colors.red,colors.green,colors.blue);
         telemetry.addData("Color",name);
         access_pushSensor();
-        getDistance();
+        getDistance(true);
         //composeTelemetry();//imu
     }
     //colors
@@ -589,13 +628,15 @@ public class SAMPLEptpov extends LinearOpMode {
                 .build();
     }
     //distance
-    public void getDistance(){
+    public void getDistance(boolean give){
         MM_distance= sensorRange.getDistance(DistanceUnit.MM);
         CM_distance= sensorRange.getDistance(DistanceUnit.CM);
         M_distance= sensorRange.getDistance(DistanceUnit.METER);
         IN_distance= sensorRange.getDistance(DistanceUnit.INCH);
         //verifyDistance();
-        giveDistances();
+        if (give) {
+            giveDistances();
+        }
     }
     public void verifyDistance(){
         if (MM_distance*10 !=CM_distance){
