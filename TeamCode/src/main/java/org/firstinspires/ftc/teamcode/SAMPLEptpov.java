@@ -74,6 +74,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public double position=0;
     boolean inRange=false;
     boolean updated_inRange=false;
+    boolean updatedHeadingInRange=false;
     //devices
     DigitalChannel digitalTouch;
     NormalizedColorSensor colorSensor;
@@ -259,6 +260,13 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Sound >", sounds[soundIndex]);
             telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
             telemetry.update();
+        }
+    }
+    public void checkHeading(int max, int min){
+        if (angles.firstAngle>=min && angles.firstAngle<=max){
+            updatedHeadingInRange=true;
+        }else{
+            updatedHeadingInRange=false;
         }
     }
     public void inRange(int sensor,int max,int min,String unit){
