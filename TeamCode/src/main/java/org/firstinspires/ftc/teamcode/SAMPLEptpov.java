@@ -262,150 +262,6 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.update();
         }
     }
-    public void checkHeading(int max, int min){
-        if (angles.firstAngle>=min && angles.firstAngle<=max){
-            updatedHeadingInRange=true;
-        }else{
-            updatedHeadingInRange=false;
-        }
-    }
-    public void inRange(int sensor,int max,int min,String unit){
-        if (sensor==1){
-            getDistance(false);
-            if (unit == "cm"){
-                if (CM_distance>=min && CM_distance<=max){
-                    inRange=true;
-                }
-            }
-            else if (unit == "mm"){
-                if (MM_distance>=min && MM_distance<=max){
-                    inRange=true;
-                }
-            }
-            else if (unit == "in"){
-                if (IN_distance>=min && IN_distance<=max){
-                    inRange=true;
-                }
-            }
-            else if (unit == "m"){
-                if (M_distance>=min && M_distance<=max){
-                    inRange=true;
-                }
-            }
-            else{
-                inRange=false;
-            }
-        }
-        updateRangeTo(inRange);
-    }
-    public void updateRangeTo(boolean condition){
-        updated_inRange= condition;
-        inRange=false;
-    }
-    public void resetRange(){
-        updated_inRange= false;
-        inRange=false;
-    }
-    public void imu(){
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled      = true;
-        parameters.loggingTag          = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
-    }
-    void composeTelemetry() {
-
-        // At the beginning of each telemetry update, grab a bunch of data
-        // from the IMU that we will then display in separate lines.
-        telemetry.addAction(new Runnable() { @Override public void run()
-        {
-            // Acquiring the angles is relatively expensive; we don't want
-            // to do that in each of the three items that need that info, as that's
-            // three times the necessary expense.
-            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            gravity  = imu.getGravity();
-        }
-        });
-
-        telemetry.addLine()
-                .addData("status", new Func<String>() {
-                    @Override public String value() {
-                        return imu.getSystemStatus().toShortString();
-                    }
-                })
-                .addData("calib", new Func<String>() {
-                    @Override public String value() {
-                        return imu.getCalibrationStatus().toString();
-                    }
-                });
-
-        telemetry.addLine()
-                .addData("heading", new Func<String>() {
-                    @Override public String value() {
-                        return formatAngle(angles.angleUnit, angles.firstAngle);
-                    }
-                })
-                .addData("roll", new Func<String>() {
-                    @Override public String value() {
-                        return formatAngle(angles.angleUnit, angles.secondAngle);
-                    }
-                })
-                .addData("pitch", new Func<String>() {
-                    @Override public String value() {
-                        return formatAngle(angles.angleUnit, angles.thirdAngle);
-                    }
-                });
-
-        telemetry.addLine()
-                .addData("grvty", new Func<String>() {
-                    @Override public String value() {
-                        return gravity.toString();
-                    }
-                })
-                .addData("mag", new Func<String>() {
-                    @Override public String value() {
-                        return String.format(Locale.getDefault(), "%.3f",
-                                Math.sqrt(gravity.xAccel*gravity.xAccel
-                                        + gravity.yAccel*gravity.yAccel
-                                        + gravity.zAccel*gravity.zAccel));
-                    }
-                });
-    }
-    String formatAngle(AngleUnit angleUnit, double angle) {
-        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
-    }
-    String formatDegrees(double degrees){
-        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
-    }
-    public void endGame(boolean flash){
-        gamepad1.runRumbleEffect(customRumbleEffect1);
-        gamepad2.runRumbleEffect(customRumbleEffect1);
-        endgame =true;
-        if (flash){
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-        }
-    }
-    public void runSample() {
-        //float gain=2;
-        final float[] hsvValues = new float[3];
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
-        if (colorSensor instanceof SwitchableLight) {
-            ((SwitchableLight) colorSensor).enableLight(true);
-        }
-    }
     public void dance(int direction){//-1=back//1=forward
         if (direction==-1){
             motorFrontLeft.setPower(-direction-0.2);
@@ -420,6 +276,7 @@ public class SAMPLEptpov extends LinearOpMode {
             motorBackRight.setPower(-direction-0.2);
         }
     }
+//IMPORTANT INIT
     public void init_all(){
         robot.init(hardwareMap);
         motorFrontLeft = hardwareMap.get(DcMotor.class,"motorFrontLeft");
@@ -539,6 +396,149 @@ public class SAMPLEptpov extends LinearOpMode {
         getDistance(true);
         //composeTelemetry();//imu
     }
+    public void imu(){
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+    }
+    public void endGame(boolean flash){
+        gamepad1.runRumbleEffect(customRumbleEffect1);
+        gamepad2.runRumbleEffect(customRumbleEffect1);
+        endgame =true;
+        if (flash){
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+        }
+    }
+    //range
+    public void inRange(boolean heading,int maxH,int minH,boolean sensor,int sensor_number,int maxD,int minD,String unit){
+        if (heading){
+            if (angles.firstAngle>=minH && angles.firstAngle<=maxH){
+                updatedHeadingInRange=true;
+            }else{
+                updatedHeadingInRange=false;
+            }
+        }
+        if (sensor==true){
+            if (sensor_number==1){
+                getDistance(false);
+                if (unit == "cm"){
+                    if (CM_distance>=minD && CM_distance<=maxD){
+                        inRange=true;
+                    }
+                }
+                else if (unit == "mm"){
+                    if (MM_distance>=minD && MM_distance<=maxD){
+                        inRange=true;
+                    }
+                }
+                else if (unit == "in"){
+                    if (IN_distance>=minD && IN_distance<=maxD){
+                        inRange=true;
+                    }
+                }
+                else if (unit == "m"){
+                    if (M_distance>=minD && M_distance<=maxD){
+                        inRange=true;
+                    }
+                }
+                else{
+                    inRange=false;
+                }
+            }
+        }
+        updateRangeTo(inRange);
+    }
+    public void updateRangeTo(boolean condition){
+        updated_inRange= condition;
+        inRange=false;
+    }
+    public void resetRange(){
+        updated_inRange= false;
+        inRange=false;
+    }
+    public void resetHeading(){
+        updatedHeadingInRange= false;
+    }
+    //imu
+    void composeTelemetry() {
+
+        // At the beginning of each telemetry update, grab a bunch of data
+        // from the IMU that we will then display in separate lines.
+        telemetry.addAction(new Runnable() { @Override public void run()
+        {
+            // Acquiring the angles is relatively expensive; we don't want
+            // to do that in each of the three items that need that info, as that's
+            // three times the necessary expense.
+            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            gravity  = imu.getGravity();
+        }
+        });
+
+        telemetry.addLine()
+                .addData("status", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getSystemStatus().toShortString();
+                    }
+                })
+                .addData("calib", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getCalibrationStatus().toString();
+                    }
+                });
+
+        telemetry.addLine()
+                .addData("heading", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(angles.angleUnit, angles.firstAngle);
+                    }
+                })
+                .addData("roll", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(angles.angleUnit, angles.secondAngle);
+                    }
+                })
+                .addData("pitch", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(angles.angleUnit, angles.thirdAngle);
+                    }
+                });
+
+        telemetry.addLine()
+                .addData("grvty", new Func<String>() {
+                    @Override public String value() {
+                        return gravity.toString();
+                    }
+                })
+                .addData("mag", new Func<String>() {
+                    @Override public String value() {
+                        return String.format(Locale.getDefault(), "%.3f",
+                                Math.sqrt(gravity.xAccel*gravity.xAccel
+                                        + gravity.yAccel*gravity.yAccel
+                                        + gravity.zAccel*gravity.zAccel));
+                    }
+                });
+    }
+    String formatAngle(AngleUnit angleUnit, double angle) {
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
+    String formatDegrees(double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
     //colors
     public void get_color_name(float red,float green,float blue){
         if ((red<=1) && (red >=0.9375)&& (green<=1)&&(green>=0.8671875) && (blue<=1)&&(blue>=0.67578125)){
@@ -552,6 +552,14 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         if ((red<=1) && (red >=0.3984375)&& (green<=0.234375)&&(green>=0) && (blue<=0.5)&&(blue>=0)){
             name="red";
+        }
+    }
+    public void runSample() {
+        //float gain=2;
+        final float[] hsvValues = new float[3];
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
+        if (colorSensor instanceof SwitchableLight) {
+            ((SwitchableLight) colorSensor).enableLight(true);
         }
     }
     //ENCODER
@@ -614,7 +622,6 @@ public class SAMPLEptpov extends LinearOpMode {
     public void setServo(int degrees){
         position = degree_mult * degrees;
     }
-
     //gamepadrumble
     public void init_rumble(){
         customRumbleEffect1 = new Gamepad.RumbleEffect.Builder()//rumble2=right side
