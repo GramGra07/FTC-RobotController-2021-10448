@@ -394,6 +394,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Color",name);
         access_pushSensor();
         getDistance(true);
+        telemetry.addData("Heading","%.1f",angles.firstAngle);
         //composeTelemetry();//imu
     }
     public void imu(){
@@ -619,6 +620,7 @@ public class SAMPLEptpov extends LinearOpMode {
             robot.motorBackRight .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
+///////setServo    
     public void setServo(int degrees){
         position = degree_mult * degrees;
     }
@@ -665,10 +667,11 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
     public void giveDistances(){
-        telemetry.addData("distance", String.format("%.0001f mm",MM_distance));
-        telemetry.addData("distance", String.format("%.0001f cm",CM_distance));
-        telemetry.addData("distance", String.format("%.0001f m",M_distance));
-        telemetry.addData("distance", String.format("%.0001f in",IN_distance));
+        telemetry.addLine()
+            .addData("distance", String.format("%.0001f mm",MM_distance))
+            .addData("distance", String.format("%.0001f cm",CM_distance))
+            .addData("distance", String.format("%.0001f m",M_distance))
+            .addData("distance", String.format("%.0001f in",IN_distance));
     }
     //color sensor
     //public void calibrateColor(boolean on){
