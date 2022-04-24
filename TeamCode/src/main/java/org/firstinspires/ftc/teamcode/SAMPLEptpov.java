@@ -138,7 +138,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public double define = 0; // 0 = off1
     //encoders
     static final double     COUNTS_PER_MOTOR_REV    = 1200 ;    // eg: TETRIX Motor Encoder
-    static final double     DRIVE_GEAR_REDUCTION    = 20 ;     // This is < 1.0 if geared UP
+    static final double     DRIVE_GEAR_REDUCTION    = .20 ;     // This is < 1.0 if geared UP
     static final double     WHEEL_DIAMETER_INCHES   = 4.6950 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
@@ -376,6 +376,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("right trigger",  "%.2f", gamepad1.right_trigger);
         telemetry.addData("left trigger",  "%.2f", gamepad1.left_trigger);
         telemetry.addData("slowMode","%.2f",slowMode);
+        telemetry.addData("Heading","%.2f", angles.firstAngle);
         //if (colorSensor instanceof DistanceSensor) {
         //    telemetry.addData("Color Distance (cm)", "%.3f", ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM));
         //}
@@ -384,12 +385,11 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addLine()
                 .addData("Red", "%.3f", colors.red)
                 .addData("Green", "%.3f", colors.green)
-                .addData("Blue", "%.3f", colors.blue);
-        telemetry.addLine()
+                .addData("Blue", "%.3f", colors.blue)
                 .addData("Hue", "%.3f", hsvValues[0])
                 .addData("Saturation", "%.3f", hsvValues[1])
-                .addData("Value", "%.3f", hsvValues[2]);
-        telemetry.addData("Alpha", "%.3f", colors.alpha);
+                .addData("Value", "%.3f", hsvValues[2])
+                .addData("Alpha", "%.3f", colors.alpha);
         get_color_name(colors.red,colors.green,colors.blue);
         telemetry.addData("Color",name);
         access_pushSensor();
@@ -406,6 +406,8 @@ public class SAMPLEptpov extends LinearOpMode {
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
+        angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        gravity  = imu.getGravity();
     }
     public void endGame(boolean flash){
         gamepad1.runRumbleEffect(customRumbleEffect1);
@@ -479,15 +481,15 @@ public class SAMPLEptpov extends LinearOpMode {
 
         // At the beginning of each telemetry update, grab a bunch of data
         // from the IMU that we will then display in separate lines.
-        telemetry.addAction(new Runnable() { @Override public void run()
-        {
-            // Acquiring the angles is relatively expensive; we don't want
-            // to do that in each of the three items that need that info, as that's
-            // three times the necessary expense.
-            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            gravity  = imu.getGravity();
-        }
-        });
+        //telemetry.addAction(new Runnable() { @Override public void run()
+        //{
+        //    // Acquiring the angles is relatively expensive; we don't want
+        //    // to do that in each of the three items that need that info, as that's
+        //    // three times the necessary expense.
+        //    angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        //    gravity  = imu.getGravity();
+        //}
+        //});
 
         telemetry.addLine()
                 .addData("status", new Func<String>() {
