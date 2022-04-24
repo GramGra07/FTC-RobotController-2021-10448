@@ -32,14 +32,7 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 import java.util.List;
-import android.app.Activity;
-import android.graphics.Color;
-import android.view.View;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.SwitchableLight;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import android.content.Context;
 import com.qualcomm.ftccommon.SoundPlayer;
@@ -47,13 +40,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
-import java.util.concurrent.TimeUnit;
-import com.qualcomm.robotcore.hardware.SwitchableLight;
-import com.qualcomm.hardware.lynx.LynxI2cColorRangeSensor;
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 @TeleOp(name="SamplePTPOV", group="Pushbot")
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
@@ -161,7 +147,7 @@ public class SAMPLEptpov extends LinearOpMode {
             });
         }
         init_controls(false,true,true,false,
-                true,true,true,false,false,true);
+                true,true,true,false,false,true,false);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -185,7 +171,7 @@ public class SAMPLEptpov extends LinearOpMode {
             //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
-                    true,true,true,false,false,false);
+                    true,true,true,false,false,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -277,20 +263,32 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
 //IMPORTANT INIT
-    public void init_all(){
+    public void init_all(boolean motors, boolean servos, boolean push_sensor, boolean color_sensor, boolean distance_sensor){
         robot.init(hardwareMap);
-        motorFrontLeft = hardwareMap.get(DcMotor.class,"motorFrontLeft");
-        motorBackLeft = hardwareMap.get(DcMotor.class,"motorBackLeft");
-        motorFrontRight = hardwareMap.get(DcMotor.class,"motorFrontRight");
-        motorBackRight = hardwareMap.get(DcMotor.class,"motorBackRight");
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
-        motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
+        if (motors){
+            motorFrontLeft = hardwareMap.get(DcMotor.class,"motorFrontLeft");
+            motorBackLeft = hardwareMap.get(DcMotor.class,"motorBackLeft");
+            motorFrontRight = hardwareMap.get(DcMotor.class,"motorFrontRight");
+            motorBackRight = hardwareMap.get(DcMotor.class,"motorBackRight");
+            motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+            motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        }
+        if (servos){
+
+        }
+        if (push_sensor){
+            digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
+        }
+        if (color_sensor){
+            colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
+        }
+        if (distance_sensor) {
+            sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
+        }
     }
     public void init_controls(boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,
-                              boolean LED,boolean encoder,boolean imu){
+                              boolean LED,boolean encoder,boolean imu,boolean pushSensor){
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
         if (auto){
@@ -326,7 +324,7 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Distance Sensor", "Running");
         }
         if (first){
-            init_all();
+            init_all(true,false,pushSensor,color_sensor,distance);
             if(camera){
                 telemetry.addData("Camera", "Running");
                 initVuforia();
@@ -395,7 +393,7 @@ public class SAMPLEptpov extends LinearOpMode {
         access_pushSensor();
         getDistance(true);
         telemetry.addData("Heading","%.1f",angles.firstAngle);
-        //composeTelemetry();//imu
+        composeTelemetry();//imu
     }
     public void imu(){
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -560,7 +558,6 @@ public class SAMPLEptpov extends LinearOpMode {
     public void runSample() {
         //float gain=2;
         final float[] hsvValues = new float[3];
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
         if (colorSensor instanceof SwitchableLight) {
             ((SwitchableLight) colorSensor).enableLight(true);
         }
