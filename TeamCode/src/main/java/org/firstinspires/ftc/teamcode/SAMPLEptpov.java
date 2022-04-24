@@ -147,7 +147,7 @@ public class SAMPLEptpov extends LinearOpMode {
             });
         }
         init_controls(false,true,true,false,
-                true,true,true,false,false,true,false);
+                true,true,true,false,false,true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -171,7 +171,7 @@ public class SAMPLEptpov extends LinearOpMode {
             //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
-                    true,true,true,false,false,false,false);
+                    true,true,true,false,false,false);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -263,7 +263,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
 //IMPORTANT INIT
-    public void init_all(boolean motors, boolean servos, boolean push_sensor, boolean color_sensor, boolean distance_sensor){
+    public void init_all(boolean motors, boolean servos, boolean color_sensor, boolean distance_sensor){
         robot.init(hardwareMap);
         if (motors){
             motorFrontLeft = hardwareMap.get(DcMotor.class,"motorFrontLeft");
@@ -276,9 +276,8 @@ public class SAMPLEptpov extends LinearOpMode {
         if (servos){
 
         }
-        if (push_sensor){
             digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
-        }
+
         if (color_sensor){
             colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
         }
@@ -288,7 +287,7 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     public void init_controls(boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,
-                              boolean LED,boolean encoder,boolean imu,boolean pushSensor){
+                              boolean LED,boolean encoder,boolean imu){
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
         if (auto){
@@ -324,7 +323,7 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Distance Sensor", "Running");
         }
         if (first){
-            init_all(true,false,pushSensor,color_sensor,distance);
+            init_all(true,false,color_sensor,distance);
             if(camera){
                 telemetry.addData("Camera", "Running");
                 initVuforia();
