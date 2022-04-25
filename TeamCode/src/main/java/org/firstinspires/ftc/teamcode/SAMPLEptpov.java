@@ -1,45 +1,43 @@
 package org.firstinspires.ftc.teamcode;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Color;
+import android.view.View;
+import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.SwitchableLight;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import java.util.Locale;
-
-import org.firstinspires.ftc.robotcontroller.external.samples.SensorREV2mDistance;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
-import android.app.Activity;
-import android.graphics.Color;
-import android.view.View;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.SwitchableLight;
-import java.util.List;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
-import android.content.Context;
-import com.qualcomm.ftccommon.SoundPlayer;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+import java.util.List;
+import java.util.Locale;
+//import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 @TeleOp(name="SamplePTPOV", group="Pushbot")
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
@@ -79,20 +77,12 @@ public class SAMPLEptpov extends LinearOpMode {
     final double End_Game = 75.0;              // Wait this many seconds before rumble-alert for half-time.
     //led
     private final static int LED_PERIOD = 10;//every 10 seconds
-    private final static int GAMEPAD_LOCKOUT = 500;//limit gamepad presses to every 500 ms
     RevBlinkinLedDriver blinkinLedDriver;
     RevBlinkinLedDriver.BlinkinPattern pattern;
     Telemetry.Item patternName;
     Telemetry.Item display;
     org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind displayKind;
     Deadline ledCycleDeadline;
-    Deadline gamepadRateLimit;
-
-    protected enum DisplayKind {
-        MANUAL,
-        AUTO
-    }
-
     //vuforia
     public double levelRead = 0;
     private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
@@ -111,11 +101,6 @@ public class SAMPLEptpov extends LinearOpMode {
             "ss_mf_fail", "ss_laser", "ss_laser_burst", "ss_light_saber", "ss_light_saber_long", "ss_light_saber_short",
             "ss_light_speed", "ss_mine", "ss_power_up", "ss_r2d2_up", "ss_roger_roger", "ss_siren", "ss_wookie"};
     boolean soundPlaying = false;
-    //
-    static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
-    static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
-    static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
-    //
     //distance
     public double MM_distance1 = 0;
     public double CM_distance1 = 0;
@@ -458,7 +443,9 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addData("Value", "%.3f", hsvValues[2])
                 .addData("Alpha", "%.3f", colors.alpha);
         get_color_name(colors.red,colors.green,colors.blue);
-        telemetry.addData("Color",name);
+        telemetry.addLine()
+                 .addData("Color",name)
+                 .addData("RGB","("+redVal+","+greenVal+","+blueVal+")");
         teleSpace();
         access_pushSensor();
         getDistance(true);
@@ -507,25 +494,25 @@ public class SAMPLEptpov extends LinearOpMode {
                 updatedHeadingInRange=false;
             }
         }
-        if (sensor==true){
+        if (sensor){
             if (sensor_number==1){
                 getDistance(false);
-                if (unit == "cm"){
+                if (unit.equals("cm")){
                     if (CM_distance1>=minD && CM_distance1<=maxD){
                         inRange=true;
                     }
                 }
-                else if (unit == "mm"){
+                else if (unit.equals("mm")){
                     if (MM_distance1>=minD && MM_distance1<=maxD){
                         inRange=true;
                     }
                 }
-                else if (unit == "in"){
+                else if (unit.equals("in")){
                     if (IN_distance1>=minD && IN_distance1<=maxD){
                         inRange=true;
                     }
                 }
-                else if (unit == "m"){
+                else if (unit.equals("m")){
                     if (M_distance1>=minD && M_distance1<=maxD){
                         inRange=true;
                     }
@@ -639,6 +626,12 @@ public class SAMPLEptpov extends LinearOpMode {
         if ((red<=1) && (red >=0.3984375)&& (green<=0.234375)&&(green>=0) && (blue<=0.5)&&(blue>=0)){
             name="red";
         }
+        getColorRGB(red,green,blue);
+    }
+    public void getColorRGB(float red,float green, float blue){
+        redVal= (int) (red*256);
+        greenVal= (int) (green*256);
+        blueVal= (int) (blue*256);
     }
     public void runSample() {
         //float gain=2;
