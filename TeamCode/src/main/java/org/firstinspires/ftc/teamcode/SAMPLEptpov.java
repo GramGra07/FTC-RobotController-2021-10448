@@ -133,6 +133,10 @@ public class SAMPLEptpov extends LinearOpMode {
     BNO055IMU imu;
     Orientation angles;
     Acceleration gravity;
+    public String direction_FW;
+    public String direction_LR;
+    public String slowModeON;
+    public String direction_ANGLE;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -167,6 +171,7 @@ public class SAMPLEptpov extends LinearOpMode {
         ElapsedTime runtime = new ElapsedTime();
         waitForStart();
         imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+        composeTelemetry();
         while (opModeIsActive()) {
             //////////flash only works with 2 phones
             showFeedback();
@@ -368,11 +373,31 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
     public void showFeedback(){
-        telemetry.addData("direction",  "%.2f", gamepad1.left_stick_y);
-        telemetry.addData("strafe",  "%.2f", gamepad1.left_stick_x);
-        telemetry.addData("right trigger",  "%.2f", gamepad1.right_trigger);
-        telemetry.addData("left trigger",  "%.2f", gamepad1.left_trigger);
-        telemetry.addData("slowMode","%.2f",slowMode);
+        if (gamepad1.left_stick_y<0){
+            direction_FW="forward";
+        }if (gamepad1.left_stick_y>0){
+            direction_FW="backward";
+        }if (gamepad1.left_stick_y==0){
+            direction_FW="idle";
+        }
+        if (gamepad1.left_stick_x<0){
+            direction_FW="right";
+        }if (gamepad1.left_stick_x>0){
+            direction_FW="left";
+        }if (gamepad1.left_stick_x==0){
+            direction_FW="idle";
+        }
+        telemetry.addLine()
+                .addData("direction",  "%.2f", direction_FW)
+                .addData("strafe",  "%.2f", direction_LR)
+                .addData("right trigger",  "%.2f", gamepad1.right_trigger)
+                .addData("left trigger",  "%.2f", gamepad1.left_trigger);
+        if (slowMode==1){
+            slowModeON="True";
+        }else{
+            slowModeON="False";
+        }
+        telemetry.addData("slowMode","%.2f",slowModeON);
         telemetry.addData("Heading","%.2f", angles.firstAngle);
         //if (colorSensor instanceof DistanceSensor) {
         //    telemetry.addData("Color Distance (cm)", "%.3f", ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM));
@@ -392,7 +417,7 @@ public class SAMPLEptpov extends LinearOpMode {
         access_pushSensor();
         getDistance(true);
         telemetry.addData("Heading","%.1f",angles.firstAngle);
-        composeTelemetry();//imu
+        //composeTelemetry();//imu
     }
     public void imu(){
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -479,15 +504,15 @@ public class SAMPLEptpov extends LinearOpMode {
 
         // At the beginning of each telemetry update, grab a bunch of data
         // from the IMU that we will then display in separate lines.
-        //telemetry.addAction(new Runnable() { @Override public void run()
-        //{
-        //    // Acquiring the angles is relatively expensive; we don't want
-        //    // to do that in each of the three items that need that info, as that's
-        //    // three times the necessary expense.
-        //    angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        //    gravity  = imu.getGravity();
-        //}
-        //});
+        telemetry.addAction(new Runnable() { @Override public void run()
+        {
+            // Acquiring the angles is relatively expensive; we don't want
+            // to do that in each of the three items that need that info, as that's
+            // three times the necessary expense.
+            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            gravity  = imu.getGravity();
+        }
+        });
 
         telemetry.addLine()
                 .addData("status", new Func<String>() {
