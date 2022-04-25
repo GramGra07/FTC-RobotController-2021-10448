@@ -43,10 +43,10 @@ import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 @TeleOp(name="SamplePTPOV", group="Pushbot")
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
-    HardwarePushbot robot           = new HardwarePushbot();   // Use a Pushbot's hardware
+    HardwarePushbot robot = new HardwarePushbot();   // Use a Pushbot's hardware
     //motors
     public DcMotor motorFrontLeft = null;
-    public DcMotor motorBackLeft  = null;
+    public DcMotor motorBackLeft = null;
     public DcMotor motorFrontRight = null;
     public DcMotor motorBackRight = null;
     //devices
@@ -60,17 +60,17 @@ public class SAMPLEptpov extends LinearOpMode {
     Acceleration gravity;
     //slowmode
     double slowMode = 0; //0 is off
-    double regular_divider=1;
-    double slowMode_divider=2;
+    double regular_divider = 1;
+    double slowMode_divider = 2;
     //colorSensor
     final float[] hsvValues = new float[3];
     //servo
-    public double position=0;
+    public double position = 0;
     public double degree_mult = 0.00277777777;
     //in range
-    boolean inRange=false;
-    boolean updated_inRange=false;
-    boolean updatedHeadingInRange=false;
+    boolean inRange = false;
+    boolean updated_inRange = false;
+    boolean updatedHeadingInRange = false;
     //rumble
     boolean endgame = false;                 // Use to prevent multiple half-time warning rumbles.
     Gamepad.RumbleEffect customRumbleEffect1;    // Use to build a custom rumble sequence.
@@ -87,12 +87,14 @@ public class SAMPLEptpov extends LinearOpMode {
     org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind displayKind;
     Deadline ledCycleDeadline;
     Deadline gamepadRateLimit;
+
     protected enum DisplayKind {
         MANUAL,
         AUTO
     }
+
     //vuforia
-    public double levelRead=0;
+    public double levelRead = 0;
     private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
     private static final String[] LABELS = {
             "Ball",
@@ -105,41 +107,42 @@ public class SAMPLEptpov extends LinearOpMode {
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
     //sounds
-    String  sounds[] =  {"ss_alarm", "ss_bb8_down", "ss_bb8_up", "ss_darth_vader", "ss_fly_by",
+    String sounds[] = {"ss_alarm", "ss_bb8_down", "ss_bb8_up", "ss_darth_vader", "ss_fly_by",
             "ss_mf_fail", "ss_laser", "ss_laser_burst", "ss_light_saber", "ss_light_saber_long", "ss_light_saber_short",
-            "ss_light_speed", "ss_mine", "ss_power_up", "ss_r2d2_up", "ss_roger_roger", "ss_siren", "ss_wookie" };
+            "ss_light_speed", "ss_mine", "ss_power_up", "ss_r2d2_up", "ss_roger_roger", "ss_siren", "ss_wookie"};
     boolean soundPlaying = false;
     //
-    static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
-    static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
-    static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
+    static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
+    static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
+    static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
     //
     //distance
-    public double MM_distance1=0;
-    public double CM_distance1=0;
-    public double M_distance1=0;
-    public double IN_distance1=0;
+    public double MM_distance1 = 0;
+    public double CM_distance1 = 0;
+    public double M_distance1 = 0;
+    public double IN_distance1 = 0;
     //color
-    public int redVal  =0;
-    public int greenVal=0;
-    public int blueVal =0;
+    public int redVal = 0;
+    public int greenVal = 0;
+    public int blueVal = 0;
     public String name = "N/A";
     //variable
     public double define = 0; // 0 = off1
     //encoders
-    static final double     COUNTS_PER_MOTOR_REV    = 1200 ;    // eg: TETRIX Motor Encoder
-    static final double     DRIVE_GEAR_REDUCTION    = .20 ;     // This is < 1.0 if geared UP
-    static final double     WHEEL_DIAMETER_INCHES   = 4.6950 ;     // For figuring circumference
-    static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+    static final double COUNTS_PER_MOTOR_REV = 1200;    // eg: TETRIX Motor Encoder
+    static final double DRIVE_GEAR_REDUCTION = .20;     // This is < 1.0 if geared UP
+    static final double WHEEL_DIAMETER_INCHES = 4.6950;     // For figuring circumference
+    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
-    static final double     DRIVE_SPEED             = 0.6;
-    static final double     TURN_SPEED              = 0.5;
+    static final double DRIVE_SPEED = 0.6;
+    static final double TURN_SPEED = 0.5;
     //telemetry
     public String direction_FW;
     public String direction_LR;
     public String direction_TLR;
     public String slowModeON;
     public String direction_ANGLE;
+    public double headingVal=0;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -153,19 +156,19 @@ public class SAMPLEptpov extends LinearOpMode {
                 }
             });
         }
-        init_controls(false,true,true,false,
-                true,true,true,false,false,true,true);
+        init_controls(false, true, true, false,
+                true, true, true, false, false, true, true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
         }
-        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)distance1;
+        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) distance1;
         //sound
-        int     soundIndex      = 0;
-        int     soundID         = -1;
-        boolean was_dpad_up     = false;
-        boolean was_dpad_down   = false;
-        boolean was_B_down   = false;
+        int soundIndex = 0;
+        int soundID = -1;
+        boolean was_dpad_up = false;
+        boolean was_dpad_down = false;
+        boolean was_B_down = false;
         Context myApp = hardwareMap.appContext;
         SoundPlayer.PlaySoundParams params = new SoundPlayer.PlaySoundParams();
         params.loopControl = 0;
@@ -178,40 +181,41 @@ public class SAMPLEptpov extends LinearOpMode {
         while (opModeIsActive()) {
             //////////flash only works with 2 phones
             showFeedback();
-            init_controls(false,true,false,false,
-                    true,true,true,false,false,false,false);
+            init_controls(false, true, false, false,
+                    true, true, true, false, false, false, false);
             double y = gamepad1.left_stick_y; // Remember, this is reversed!
             double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = -gamepad1.right_stick_x;
             double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
             double frontLeftPower = (y + x + rx) / denominator;
-            double backLeftPower  = (y - x + rx) / denominator;
-            double frontRightPower= (y - x - rx) / denominator;
+            double backLeftPower = (y - x + rx) / denominator;
+            double frontRightPower = (y - x - rx) / denominator;
             double backRightPower = (y + x - rx) / denominator;
             //slowmode
-            if (gamepad1.start && gamepad1.back && define==0 && !was_B_down){
-                define =1;
-            }if (gamepad1.start && gamepad1.back && define==1 && !was_B_down){
-                define=0;
+            if (gamepad1.start && gamepad1.back && define == 0 && !was_B_down) {
+                define = 1;
             }
-            if (define==1){
+            if (gamepad1.start && gamepad1.back && define == 1 && !was_B_down) {
+                define = 0;
+            }
+            if (define == 1) {
                 defControllers(true);
             }
-            if (gamepad1.b && slowMode==0){
-                slowMode=1;
-            }else if (gamepad1.b && slowMode==1){
-                slowMode=0;
+            if (gamepad1.b && slowMode == 0) {
+                slowMode = 1;
+            } else if (gamepad1.b && slowMode == 1) {
+                slowMode = 0;
             }
-            if (slowMode==1){
-                backRightPower /=slowMode_divider;
-                backLeftPower /=slowMode_divider;
-                frontRightPower /=slowMode_divider;
-                frontLeftPower /=slowMode_divider;
-            }else{
-                backRightPower /=regular_divider;
-                backLeftPower  /=regular_divider;
-                frontRightPower/=regular_divider;
-                frontLeftPower /=regular_divider;
+            if (slowMode == 1) {
+                backRightPower /= slowMode_divider;
+                backLeftPower /= slowMode_divider;
+                frontRightPower /= slowMode_divider;
+                frontLeftPower /= slowMode_divider;
+            } else {
+                backRightPower /= regular_divider;
+                backLeftPower /= regular_divider;
+                frontRightPower /= regular_divider;
+                frontLeftPower /= regular_divider;
             }
             //
             ////////sound
@@ -222,32 +226,33 @@ public class SAMPLEptpov extends LinearOpMode {
                 soundIndex = (soundIndex + sounds.length - 1) % sounds.length;
             }
             if (gamepad1.a && !soundPlaying) {
-                if ((soundID = myApp.getResources().getIdentifier(sounds[soundIndex], "raw", myApp.getPackageName())) != 0){
+                if ((soundID = myApp.getResources().getIdentifier(sounds[soundIndex], "raw", myApp.getPackageName())) != 0) {
                     soundPlaying = true;
                     SoundPlayer.getInstance().startPlaying(myApp, soundID, params, null,
                             new Runnable() {
                                 public void run() {
                                     soundPlaying = false;
-                                }} );
+                                }
+                            });
                 }
             }
-            was_dpad_up     = gamepad1.dpad_up;
-            was_dpad_down   = gamepad1.dpad_down;
-            was_B_down   = gamepad1.b;
+            was_dpad_up = gamepad1.dpad_up;
+            was_dpad_down = gamepad1.dpad_down;
+            was_B_down = gamepad1.b;
             ////////
             run_vu();
             //endgame init
-            if ((runtime.seconds() > End_Game) && !endgame)  {
+            if ((runtime.seconds() > End_Game) && !endgame) {
                 endGame(true);
             }
             if (!endgame) {
-                telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()) );
+                telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()));
             }
             //
-            motorFrontLeft .setPower(frontLeftPower );
-            motorBackLeft  .setPower(backLeftPower  );
+            motorFrontLeft.setPower(frontLeftPower);
+            motorBackLeft.setPower(backLeftPower);
             motorFrontRight.setPower(frontRightPower);
-            motorBackRight .setPower(backRightPower );
+            motorBackRight.setPower(backRightPower);
             sleep(50);
             teleSpace();
             telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
@@ -257,105 +262,123 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.update();
         }
     }
-    public void dance(int direction){//-1=back//1=forward
-        if (direction==-1){
-            motorFrontLeft.setPower(-direction-0.2);
+
+    public void dance(int direction) {//-1=back//1=forward
+        if (direction == -1) {
+            motorFrontLeft.setPower(-direction - 0.2);
             motorBackLeft.setPower(direction);
-            motorFrontRight.setPower(-direction-0.2);
+            motorFrontRight.setPower(-direction - 0.2);
             motorBackRight.setPower(direction);
         }
-        if (direction==1){
+        if (direction == 1) {
             motorFrontLeft.setPower(direction);
-            motorBackLeft.setPower(-direction-0.2);
+            motorBackLeft.setPower(-direction - 0.2);
             motorFrontRight.setPower(direction);
-            motorBackRight.setPower(-direction-0.2);
+            motorBackRight.setPower(-direction - 0.2);
         }
     }
-    //make space in telemetry read-out
-    public void teleSpace(){
-        telemetry.addLine()
-                .addData("","");
 
+    //make space in telemetry read-out
+    public void teleSpace() {
+        telemetry.addLine()
+                .addData("", "");
+
+    }
+    public void directionalHeading(){
+        headingVal=angles.firstAngle;
+        if (headingVal>45 && headingVal<135){
+            direction_ANGLE="right";
+        }
+        if (headingVal<-45 && headingVal<45){
+            direction_ANGLE="forward";
+        }
+        if (headingVal>135 && headingVal>-135){
+            direction_ANGLE="backwards";
+        }
+        if (headingVal>-45 && headingVal<-135){
+            direction_ANGLE="left";
+        }
     }
 //IMPORTANT INIT
     //will initiate all and give names of objects
-    public void init_all(boolean motors, boolean servos, boolean color_sensor, boolean distance_sensor){
+    public void init_all(boolean motors, boolean servos, boolean color_sensor, boolean distance_sensor) {
         robot.init(hardwareMap);
-        if (motors){
-            motorFrontLeft = hardwareMap.get(DcMotor.class,"motorFrontLeft");
-            motorBackLeft = hardwareMap.get(DcMotor.class,"motorBackLeft");
-            motorFrontRight = hardwareMap.get(DcMotor.class,"motorFrontRight");
-            motorBackRight = hardwareMap.get(DcMotor.class,"motorBackRight");
+        if (motors) {
+            motorFrontLeft = hardwareMap.get(DcMotor.class, "motorFrontLeft");
+            motorBackLeft = hardwareMap.get(DcMotor.class, "motorBackLeft");
+            motorFrontRight = hardwareMap.get(DcMotor.class, "motorFrontRight");
+            motorBackRight = hardwareMap.get(DcMotor.class, "motorBackRight");
             motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
             motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
         }
-        if (servos){
+        if (servos) {
 
         }
-            digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
 
-        if (color_sensor){
+        if (color_sensor) {
             colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
         }
         if (distance_sensor) {
             distance1 = hardwareMap.get(DistanceSensor.class, "distance_1");
         }
     }
+
     //will initiate based on variables and assign variables
-    public void init_controls(boolean auto,boolean color_sensor,boolean first,
-                              boolean camera,boolean distance,boolean sound,boolean rumble,
-                              boolean LED,boolean encoder,boolean imu,boolean controls){
+    public void init_controls(boolean auto, boolean color_sensor, boolean first,
+                              boolean camera, boolean distance, boolean sound, boolean rumble,
+                              boolean LED, boolean encoder, boolean imu, boolean controls) {
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
-        if (auto){
-            if (encoder){
+        if (auto) {
+            if (encoder) {
                 resetEncoder();
                 telemetry.addData("Encoders", "Running");
             }
         }
-        if (imu){
+        if (imu) {
             imu();
         }
-        if (rumble){
+        if (rumble) {
             init_rumble();
             telemetry.addData("Rumble", "Running");
         }
-        if (sound){
+        if (sound) {
             telemetry.addData("Sound", "Running");
         }
-        if (distance){
+        if (distance) {
             telemetry.addData("Distance Sensor", "Running");
         }
-        if (first){
-            init_all(true,false,color_sensor,distance);
-            if(camera){
+        if (first) {
+            init_all(true, false, color_sensor, distance);
+            if (camera) {
                 telemetry.addData("Camera", "Running");
                 initVuforia();
                 initTfod();
             }
         }
-        if (color_sensor){
+        if (color_sensor) {
             //colorSensorLight(light);
             init_colorSensor();
             telemetry.addData("Color Sensor", "Running");
         }
-        if (!auto){
+        if (!auto) {
             telemetry.addData("The Force", "Is With You Driver");
-        }else{
+        } else {
             telemetry.addData("Hope", "Auto Works");
         }
         telemetry.addData("Systems", "Running");
-        if (controls){
+        if (controls) {
             showControls();
         }
         //if (LED){
-            init_LED();
-            telemetry.addData("LED", "Running");
-            if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
-                doAutoDisplay();
-            }
-        }
+        //init_LED();
+        //telemetry.addData("LED", "Running");
+        //if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
+        //    doAutoDisplay();
+        //}
     }
+
     //controls to be shown on telemetry
     public void showControls(){
         telemetry.addData("Control 1", "Driver");
@@ -410,6 +433,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }else{
             slowModeON="False";
         }
+        directionalHeading();
         telemetry.addLine()
                 .addData("direction",   direction_FW)
                 .addData("strafe",   direction_LR)
@@ -420,6 +444,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("slowMode",slowModeON);
         teleSpace();
         telemetry.addData("Heading","%.1f", angles.firstAngle);
+        telemetry.addData("Heading Direction",direction_ANGLE);
         teleSpace();
         NormalizedRGBA colors = colorSensor.getNormalizedColors();
         Color.colorToHSV(colors.toColor(), hsvValues);
@@ -795,14 +820,14 @@ public class SAMPLEptpov extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
     }
     //Led
-    public void init_LED(){
-        blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
-        pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
-        blinkinLedDriver.setPattern(pattern);
-        display = telemetry.addData("Display Kind: ", displayKind.toString());
-        patternName = telemetry.addData("Pattern: ", pattern.toString());
-        ledCycleDeadline = new Deadline(LED_PERIOD, TimeUnit.SECONDS);
-        gamepadRateLimit = new Deadline(GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
-        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
-    }
+    //public void init_LED(){
+    //    blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+    //    pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
+    //    blinkinLedDriver.setPattern(pattern);
+    //    display = telemetry.addData("Display Kind: ", displayKind.toString());
+    //    patternName = telemetry.addData("Pattern: ", pattern.toString());
+    //    ledCycleDeadline = new Deadline(LED_PERIOD, TimeUnit.SECONDS);
+    //    gamepadRateLimit = new Deadline(GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
+    //    setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
+    //}
 }
