@@ -294,6 +294,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public void init_controls(boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,
                               boolean LED,boolean encoder,boolean imu,boolean controls){
+        telemetry.setAutoClear(true);
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
         if (auto){
@@ -346,6 +347,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }else{
             telemetry.addData("Hope", "Auto Works");
         }
+        telemetry.setAutoClear(false);
         telemetry.addData("Systems", "Running");
         if (controls){
             showControls();
