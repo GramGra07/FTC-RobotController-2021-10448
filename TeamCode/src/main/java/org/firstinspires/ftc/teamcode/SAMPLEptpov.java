@@ -44,28 +44,33 @@ import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot           = new HardwarePushbot();   // Use a Pushbot's hardware
+    //motors
+    public DcMotor motorFrontLeft = null;
+    public DcMotor motorBackLeft  = null;
+    public DcMotor motorFrontRight = null;
+    public DcMotor motorBackRight = null;
+    //devices
+    DigitalChannel digitalTouch;
+    NormalizedColorSensor colorSensor;
+    View relativeLayout;
+    DistanceSensor distance1;
+    //
+    BNO055IMU imu;
+    Orientation angles;
+    Acceleration gravity;
     //slowmode
     double slowMode = 0; //0 is off
     double regular_divider=1;
     double slowMode_divider=2;
     //colorSensor
     final float[] hsvValues = new float[3];
-    double calibration = 0;//0=off
-    //motors
-    public DcMotor motorFrontLeft = null;
-    public DcMotor motorBackLeft  = null;
-    public DcMotor motorFrontRight = null;
-    public DcMotor motorBackRight = null;
-
+    //servo
     public double position=0;
+    public double degree_mult = 0.00277777777;
+    //in range
     boolean inRange=false;
     boolean updated_inRange=false;
     boolean updatedHeadingInRange=false;
-    //devices
-    DigitalChannel digitalTouch;
-    NormalizedColorSensor colorSensor;
-    View relativeLayout;
-    DistanceSensor sensorRange;
     //rumble
     boolean endgame = false;                 // Use to prevent multiple half-time warning rumbles.
     Gamepad.RumbleEffect customRumbleEffect1;    // Use to build a custom rumble sequence.
@@ -110,16 +115,15 @@ public class SAMPLEptpov extends LinearOpMode {
     static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
     //
     //distance
-    public double MM_distance=0;
-    public double CM_distance=0;
-    public double M_distance=0;
-    public double IN_distance=0;
-    //
+    public double MM_distance1=0;
+    public double CM_distance1=0;
+    public double M_distance1=0;
+    public double IN_distance1=0;
+    //color
     public int redVal  =0;
     public int greenVal=0;
     public int blueVal =0;
-    public double degree_mult = 0.00277777777;
-    public String name = "string";
+    public String name = "N/A";
     //variable
     public double define = 0; // 0 = off1
     //encoders
@@ -130,9 +134,7 @@ public class SAMPLEptpov extends LinearOpMode {
             (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double     DRIVE_SPEED             = 0.6;
     static final double     TURN_SPEED              = 0.5;
-    BNO055IMU imu;
-    Orientation angles;
-    Acceleration gravity;
+    //telemetry
     public String direction_FW;
     public String direction_LR;
     public String direction_TLR;
@@ -157,7 +159,7 @@ public class SAMPLEptpov extends LinearOpMode {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
         }
-        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
+        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)distance1;
         //sound
         int     soundIndex      = 0;
         int     soundID         = -1;
@@ -268,7 +270,14 @@ public class SAMPLEptpov extends LinearOpMode {
             motorBackRight.setPower(-direction-0.2);
         }
     }
+    //make space in telemetry read-out
+    public void teleSpace(){
+        telemetry.addLine()
+                .addData(" "," ");
+
+    }
 //IMPORTANT INIT
+    //will initiate all and give names of objects
     public void init_all(boolean motors, boolean servos, boolean color_sensor, boolean distance_sensor){
         robot.init(hardwareMap);
         if (motors){
@@ -288,9 +297,10 @@ public class SAMPLEptpov extends LinearOpMode {
             colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
         }
         if (distance_sensor) {
-            sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
+            distance1 = hardwareMap.get(DistanceSensor.class, "distance_1");
         }
     }
+    //will initiate based on variables and assign variables
     public void init_controls(boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,
                               boolean LED,boolean encoder,boolean imu,boolean controls){
@@ -306,19 +316,6 @@ public class SAMPLEptpov extends LinearOpMode {
         if (imu){
             imu();
         }
-        //if (LED){
-        //    init_LED();
-        //    telemetry.addData("LED", "Running");
-        //    handleGamepad();
-        //
-        //    if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
-        //        doAutoDisplay();
-        //    } else {
-        //        /*
-        //         * MANUAL mode: Nothing to do, setting the pattern as a result of a gamepad event.
-        //         */
-        //    }
-        //}
         if (rumble){
             init_rumble();
             telemetry.addData("Rumble", "Running");
@@ -352,7 +349,21 @@ public class SAMPLEptpov extends LinearOpMode {
         if (controls){
             showControls();
         }
+        //if (LED){
+        //    init_LED();
+        //    telemetry.addData("LED", "Running");
+        //    handleGamepad();
+        //
+        //    if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
+        //        doAutoDisplay();
+        //    } else {
+        //        /*
+        //         * MANUAL mode: Nothing to do, setting the pattern as a result of a gamepad event.
+        //         */
+        //    }
+        //}
     }
+    //controls to be shown on telemetry
     public void showControls(){
         telemetry.addData("Control 1", "Driver");
         telemetry.addData("Control 2", "Other controls");
@@ -361,6 +372,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Control 2", "A = play song");
         telemetry.addData("Control", "");
     }
+    //show controller 1 vs controller 2
     public void defControllers(boolean flash){
         gamepad1.runRumbleEffect(customRumbleEffect3);//1 buzz
         gamepad2.runRumbleEffect(customRumbleEffect2);//2 buzz
@@ -377,6 +389,7 @@ public class SAMPLEptpov extends LinearOpMode {
             }
         }
     }
+    //telemetry additions
     public void showFeedback(){
         if (gamepad1.left_stick_y<0){
             direction_FW="forward";
@@ -432,6 +445,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Heading","%.1f",angles.firstAngle);
         //composeTelemetry();//imu
     }
+    //gyroscope with heading pitch and roll
     public void imu(){
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
@@ -445,6 +459,7 @@ public class SAMPLEptpov extends LinearOpMode {
         angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         gravity  = imu.getGravity();
     }
+    //endgame effects//dont really work well
     public void endGame(boolean flash){
         gamepad1.runRumbleEffect(customRumbleEffect1);
         gamepad2.runRumbleEffect(customRumbleEffect1);
@@ -463,6 +478,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
     //range
+    //gets the values and finds if it is in a range of max to min
     public void inRange(boolean heading,int maxH,int minH,boolean sensor,int sensor_number,int maxD,int minD,String unit){
         if (heading){
             if (angles.firstAngle>=minH && angles.firstAngle<=maxH){
@@ -475,22 +491,22 @@ public class SAMPLEptpov extends LinearOpMode {
             if (sensor_number==1){
                 getDistance(false);
                 if (unit == "cm"){
-                    if (CM_distance>=minD && CM_distance<=maxD){
+                    if (CM_distance1>=minD && CM_distance1<=maxD){
                         inRange=true;
                     }
                 }
                 else if (unit == "mm"){
-                    if (MM_distance>=minD && MM_distance<=maxD){
+                    if (MM_distance1>=minD && MM_distance1<=maxD){
                         inRange=true;
                     }
                 }
                 else if (unit == "in"){
-                    if (IN_distance>=minD && IN_distance<=maxD){
+                    if (IN_distance1>=minD && IN_distance1<=maxD){
                         inRange=true;
                     }
                 }
                 else if (unit == "m"){
-                    if (M_distance>=minD && M_distance<=maxD){
+                    if (M_distance1>=minD && M_distance1<=maxD){
                         inRange=true;
                     }
                 }
@@ -501,18 +517,22 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         updateRangeTo(inRange);
     }
+    //update range
     public void updateRangeTo(boolean condition){
         updated_inRange= condition;
         inRange=false;
     }
+    //resets range
     public void resetRange(){
         updated_inRange= false;
         inRange=false;
     }
+    //resets the heading
     public void resetHeading(){
         updatedHeadingInRange= false;
     }
     //imu
+    //imu telemetry
     void composeTelemetry() {
 
         // At the beginning of each telemetry update, grab a bunch of data
@@ -655,7 +675,7 @@ public class SAMPLEptpov extends LinearOpMode {
             robot.motorBackRight .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
-///////setServo    
+///////setServo
     public void setServo(int degrees){
         position = degree_mult * degrees;
     }
@@ -681,19 +701,19 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //distance
     public void getDistance(boolean give){
-        MM_distance= sensorRange.getDistance(DistanceUnit.MM);
-        CM_distance= sensorRange.getDistance(DistanceUnit.CM);
-        M_distance= sensorRange.getDistance(DistanceUnit.METER);
-        IN_distance= sensorRange.getDistance(DistanceUnit.INCH);
+        MM_distance1= distance1.getDistance(DistanceUnit.MM);
+        CM_distance1= distance1.getDistance(DistanceUnit.CM);
+        M_distance1= distance1.getDistance(DistanceUnit.METER);
+        IN_distance1= distance1.getDistance(DistanceUnit.INCH);
         //verifyDistance();
         if (give) {
             giveDistances();
         }
     }
     public void verifyDistance(){
-        if (MM_distance*10 !=CM_distance){
+        if (MM_distance1*10 !=CM_distance1){
             telemetry.addData("DISTANCE","ERROR");
-        }else if (CM_distance*100 !=M_distance){
+        }else if (CM_distance1*100 !=M_distance1){
             telemetry.addData("DISTANCE","ERROR");
         //} else if (IN_distance*0.393701 !=CM_distance){
          //   telemetry.addData("DISTANCE","ERROR");
@@ -703,10 +723,10 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     public void giveDistances(){
         telemetry.addLine()
-            .addData("distance", String.format("%.0001f mm",MM_distance))
-            .addData("distance", String.format("%.0001f cm",CM_distance))
-            .addData("distance", String.format("%.0001f m",M_distance))
-            .addData("distance", String.format("%.0001f in",IN_distance));
+            .addData("distance", String.format("%.0001f mm",MM_distance1))
+            .addData("distance", String.format("%.0001f cm",CM_distance1))
+            .addData("distance", String.format("%.0001f m",M_distance1))
+            .addData("distance", String.format("%.0001f in",IN_distance1));
     }
     //color sensor
     //public void calibrateColor(boolean on){
