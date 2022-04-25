@@ -151,7 +151,7 @@ public class SAMPLEptpov extends LinearOpMode {
             });
         }
         init_controls(false,true,true,false,
-                true,true,true,false,false,true);
+                true,true,true,false,false,true,false);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -176,7 +176,7 @@ public class SAMPLEptpov extends LinearOpMode {
             //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
-                    true,true,true,false,false,false);
+                    true,true,true,false,false,false,true);
             double y = -gamepad1.left_stick_y; // Remember, this is reversed!
             double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = gamepad1.right_stick_x;
@@ -292,7 +292,7 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     public void init_controls(boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,
-                              boolean LED,boolean encoder,boolean imu){
+                              boolean LED,boolean encoder,boolean imu,boolean controls){
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
         if (auto){
@@ -345,8 +345,11 @@ public class SAMPLEptpov extends LinearOpMode {
         }else{
             telemetry.addData("Hope", "Auto Works");
         }
+        telemetry.clearAll();
         telemetry.addData("Systems", "Running");
-        showControls();
+        if (controls){
+            showControls();
+        }
     }
     public void showControls(){
         telemetry.addData("Control 1", "Driver");
@@ -380,24 +383,24 @@ public class SAMPLEptpov extends LinearOpMode {
         }if (gamepad1.left_stick_y==0){
             direction_FW="idle";
         }
-        if (gamepad1.left_stick_x<0){
-            direction_FW="right";
-        }if (gamepad1.left_stick_x>0){
-            direction_FW="left";
+        if (gamepad1.left_stick_x>0){
+            direction_LR="right";
+        }if (gamepad1.left_stick_x<0){
+            direction_LR="left";
         }if (gamepad1.left_stick_x==0){
-            direction_FW="idle";
+            direction_LR="idle";
         }
         telemetry.addLine()
-                .addData("direction",  "%.2f", direction_FW)
-                .addData("strafe",  "%.2f", direction_LR)
-                .addData("right trigger",  "%.2f", gamepad1.right_trigger)
-                .addData("left trigger",  "%.2f", gamepad1.left_trigger);
+                .addData("direction",   direction_FW)
+                .addData("strafe",   direction_LR)
+                .addData("r trigger",  "%.2f", gamepad1.right_trigger)
+                .addData("l trigger",  "%.2f", gamepad1.left_trigger);
         if (slowMode==1){
-            slowModeON="True";
+            slowModeON= "True";
         }else{
             slowModeON="False";
         }
-        telemetry.addData("slowMode","%.2f",slowModeON);
+        telemetry.addData("slowMode",slowModeON);
         telemetry.addData("Heading","%.2f", angles.firstAngle);
         //if (colorSensor instanceof DistanceSensor) {
         //    telemetry.addData("Color Distance (cm)", "%.3f", ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM));
@@ -525,7 +528,6 @@ public class SAMPLEptpov extends LinearOpMode {
                         return imu.getCalibrationStatus().toString();
                     }
                 });
-
         telemetry.addLine()
                 .addData("heading", new Func<String>() {
                     @Override public String value() {
