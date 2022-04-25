@@ -140,6 +140,9 @@ public class SAMPLEptpov extends LinearOpMode {
     public String direction_TLR;
     public String slowModeON;
     public String direction_ANGLE;
+    //imu
+    public double angl_mult=0;
+    public double newAngle=0;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -274,7 +277,7 @@ public class SAMPLEptpov extends LinearOpMode {
     //make space in telemetry read-out
     public void teleSpace(){
         telemetry.addLine()
-                .addData(" "," ");
+                .addData("","");
 
     }
 //IMPORTANT INIT
@@ -305,7 +308,6 @@ public class SAMPLEptpov extends LinearOpMode {
     public void init_controls(boolean auto,boolean color_sensor,boolean first,
                               boolean camera,boolean distance,boolean sound,boolean rumble,
                               boolean LED,boolean encoder,boolean imu,boolean controls){
-        telemetry.setAutoClear(true);
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
         if (auto){
@@ -345,7 +347,6 @@ public class SAMPLEptpov extends LinearOpMode {
         }else{
             telemetry.addData("Hope", "Auto Works");
         }
-        telemetry.setAutoClear(false);
         telemetry.addData("Systems", "Running");
         if (controls){
             showControls();
@@ -427,7 +428,7 @@ public class SAMPLEptpov extends LinearOpMode {
         teleSpace();
         telemetry.addData("slowMode",slowModeON);
         teleSpace();
-        telemetry.addData("Heading","%.2f", angles.firstAngle);
+        telemetry.addData("Heading","%.1f", angles.firstAngle);
         teleSpace();
         NormalizedRGBA colors = colorSensor.getNormalizedColors();
         Color.colorToHSV(colors.toColor(), hsvValues);
@@ -444,7 +445,7 @@ public class SAMPLEptpov extends LinearOpMode {
         teleSpace();
         access_pushSensor();
         getDistance(true);
-        telemetry.addData("Heading","%.1f",angles.firstAngle);
+        teleSpace();
         //composeTelemetry();//imu
     }
     //gyroscope with heading pitch and roll
@@ -599,6 +600,15 @@ public class SAMPLEptpov extends LinearOpMode {
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
     //colors
+    public void init_colorSensor(){
+        colorSensor.setGain(10);
+
+        relativeLayout.post(new Runnable() {
+            public void run() {
+                relativeLayout.setBackgroundColor(Color.HSVToColor(hsvValues));
+            }
+        });
+    }
     public void get_color_name(float red,float green,float blue){
         if ((red<=1) && (red >=0.9375)&& (green<=1)&&(green>=0.8671875) && (blue<=1)&&(blue>=0.67578125)){
             name="white";
@@ -730,38 +740,6 @@ public class SAMPLEptpov extends LinearOpMode {
             .addData("distance", String.format("%.0001f m",M_distance1))
             .addData("distance", String.format("%.0001f in",IN_distance1));
     }
-    //color sensor
-    //public void calibrateColor(boolean on){
-    //    //telemetry.addLine("Higher gain values mean that the sensor
-    //    // will report larger numbers for Red, Green, and Blue, and Value\n");
-    //    if (on) {
-    //        telemetry.addData("In Calibration State", "Press Back to Leave");
-    //        calibration = 1;
-    //        if (gamepad1.dpad_right) {
-    //            gain += 0.005;
-    //        } else if (gamepad1.dpad_left && gain > 1) {
-    //            gain -= 0.005;
-    //        }
-    //    }else if (!on){
-    //        calibration=0;
-    //    }
-    //}
-    public void init_colorSensor(){
-        //telemetry.addData("Gain", gain);
-        colorSensor.setGain(10);
-        
-        relativeLayout.post(new Runnable() {
-            public void run() {
-                relativeLayout.setBackgroundColor(Color.HSVToColor(hsvValues));
-            }
-        });
-    }
-    //public void colorSensorLight(boolean on){
-    //    SwitchableLight light = (SwitchableLight)colorSensor;
-    //    if (on){
-    //        light.enableLight(!light.isLightOn());
-    //    }
-    //}
     //push Sensor
     public void access_pushSensor(){
         if (digitalTouch.getState()) {
