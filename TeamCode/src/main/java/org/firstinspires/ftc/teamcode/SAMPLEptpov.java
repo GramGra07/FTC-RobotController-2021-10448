@@ -140,9 +140,6 @@ public class SAMPLEptpov extends LinearOpMode {
     public String direction_TLR;
     public String slowModeON;
     public String direction_ANGLE;
-    //imu
-    public double angl_mult=0;
-    public double newAngle=0;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -352,18 +349,12 @@ public class SAMPLEptpov extends LinearOpMode {
             showControls();
         }
         //if (LED){
-        //    init_LED();
-        //    telemetry.addData("LED", "Running");
-        //    handleGamepad();
-        //
-        //    if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
-        //        doAutoDisplay();
-        //    } else {
-        //        /*
-        //         * MANUAL mode: Nothing to do, setting the pattern as a result of a gamepad event.
-        //         */
-        //    }
-        //}
+            init_LED();
+            telemetry.addData("LED", "Running");
+            if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
+                doAutoDisplay();
+            }
+        }
     }
     //controls to be shown on telemetry
     public void showControls(){
@@ -804,53 +795,14 @@ public class SAMPLEptpov extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
     }
     //Led
-    //public void init_LED(){
-    //    displayKind = SampleRevBlinkinLedDriver.DisplayKind.AUTO;
-    //
-    //    blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
-    //    pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
-    //    blinkinLedDriver.setPattern(pattern);
-    //
-    //    display = telemetry.addData("Display Kind: ", displayKind.toString());
-    //    patternName = telemetry.addData("Pattern: ", pattern.toString());
-    //
-    //    ledCycleDeadline = new Deadline(LED_PERIOD, TimeUnit.SECONDS);
-    //    gamepadRateLimit = new Deadline(GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
-    //}
-    //protected void handleGamepad() //{
-    //    if (!gamepadRateLimit.hasExpired()) {
-    //        return;
-    //    }
-    //    if (gamepad1.a) {
-    //        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.MANUAL);
-    //        gamepadRateLimit.reset();
-    //    } else if (gamepad1.b) {
-    //        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
-    //        gamepadRateLimit.reset();
-    //    } else if ((displayKind == SampleRevBlinkinLedDriver.DisplayKind.MANUAL) && (gamepad1.left_bumper)) {
-    //        pattern = pattern.previous();
-    //        displayPattern();
-    //        gamepadRateLimit.reset();
-    //    } else if ((displayKind == SampleRevBlinkinLedDriver.DisplayKind.MANUAL) && (gamepad1.right_bumper)) {
-    //        pattern = pattern.next();
-    //        displayPattern();
-    //        gamepadRateLimit.reset();
-    //    }
-    //}
-    //protected void setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind displayKind) //{
-    //    this.displayKind = displayKind;
-    //    display.setValue(displayKind.toString());
-    //}
-    //protected void doAutoDisplay() {
-    //    if (ledCycleDeadline.hasExpired()) {
-    //        pattern = pattern.next();
-    //        displayPattern();
-    //        ledCycleDeadline.reset();
-    //    }
-    //}
-    //protected void displayPattern() {
-    //    blinkinLedDriver.setPattern(pattern);
-    //    patternName.setValue(pattern.toString());
-    //}
-    //
+    public void init_LED(){
+        blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+        pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
+        blinkinLedDriver.setPattern(pattern);
+        display = telemetry.addData("Display Kind: ", displayKind.toString());
+        patternName = telemetry.addData("Pattern: ", pattern.toString());
+        ledCycleDeadline = new Deadline(LED_PERIOD, TimeUnit.SECONDS);
+        gamepadRateLimit = new Deadline(GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
+        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
+    }
 }
