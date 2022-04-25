@@ -165,7 +165,7 @@ public class SAMPLEptpov extends LinearOpMode {
         composeTelemetry();
         while (opModeIsActive()) {
             //////////flash only works with 2 phones
-            showFeedback();
+            showFeedback(false);
             init_controls(false, false, false, false,
                     false, true, true, false, false, false, false);
             double y = gamepad1.left_stick_y; // Remember, this is reversed!
@@ -392,7 +392,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
     //telemetry additions
-    public void showFeedback(){
+    public void showFeedback(boolean color_sensor){
         if (gamepad1.left_stick_y<0){
             direction_FW="forward";
         }if (gamepad1.left_stick_y>0){
@@ -432,21 +432,23 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Heading","%.1f", angles.firstAngle);
         telemetry.addData("Heading Direction",direction_ANGLE);
         teleSpace();
-        NormalizedRGBA colors = colorSensor.getNormalizedColors();
-        Color.colorToHSV(colors.toColor(), hsvValues);
-        telemetry.addLine()
-                .addData("Red", "%.3f", colors.red)
-                .addData("Green", "%.3f", colors.green)
-                .addData("Blue", "%.3f", colors.blue)
-                .addData("Hue", "%.3f", hsvValues[0])
-                .addData("Saturation", "%.3f", hsvValues[1])
-                .addData("Value", "%.3f", hsvValues[2])
-                .addData("Alpha", "%.3f", colors.alpha);
-        get_color_name(colors.red,colors.green,colors.blue);
-        telemetry.addLine()
-                 .addData("Color",name)
-                 .addData("RGB","("+redVal+","+greenVal+","+blueVal+")");
-        teleSpace();
+        if (color_sensor) {
+            NormalizedRGBA colors = colorSensor.getNormalizedColors();
+            Color.colorToHSV(colors.toColor(), hsvValues);
+            telemetry.addLine()
+                    .addData("Red", "%.3f", colors.red)
+                    .addData("Green", "%.3f", colors.green)
+                    .addData("Blue", "%.3f", colors.blue)
+                    .addData("Hue", "%.3f", hsvValues[0])
+                    .addData("Saturation", "%.3f", hsvValues[1])
+                    .addData("Value", "%.3f", hsvValues[2])
+                    .addData("Alpha", "%.3f", colors.alpha);
+            get_color_name(colors.red, colors.green, colors.blue);
+            telemetry.addLine()
+                    .addData("Color", name)
+                    .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
+            teleSpace();
+        }
         access_pushSensor();
         getDistance(true);
         teleSpace();
