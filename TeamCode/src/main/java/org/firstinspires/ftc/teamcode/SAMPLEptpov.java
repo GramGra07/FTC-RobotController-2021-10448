@@ -15,7 +15,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import java.util.Locale;
-import org.firstinspires.ftc.robotcontroller.external.samples.SampleRevBlinkinLedDriver;
+
 import org.firstinspires.ftc.robotcontroller.external.samples.SensorREV2mDistance;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -371,12 +371,13 @@ public class SAMPLEptpov extends LinearOpMode {
         if (controls) {
             showControls();
         }
-        //if (LED){
-        //init_LED();
-        //telemetry.addData("LED", "Running");
-        //if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
-        //    doAutoDisplay();
-        //}
+        if (LED){
+            init_LED();
+            telemetry.addData("LED", "Running");
+            if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
+                doAutoDisplay();
+            }
+        }
     }
 
     //controls to be shown on telemetry
@@ -820,14 +821,31 @@ public class SAMPLEptpov extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
     }
     //Led
-    //public void init_LED(){
-    //    blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
-    //    pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
-    //    blinkinLedDriver.setPattern(pattern);
-    //    display = telemetry.addData("Display Kind: ", displayKind.toString());
-    //    patternName = telemetry.addData("Pattern: ", pattern.toString());
-    //    ledCycleDeadline = new Deadline(LED_PERIOD, TimeUnit.SECONDS);
-    //    gamepadRateLimit = new Deadline(GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
-    //    setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
-    //}
+    public void init_LED(){
+        blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+        pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
+        blinkinLedDriver.setPattern(pattern);
+        display = telemetry.addData("Display Kind: ", displayKind.toString());
+        patternName = telemetry.addData("Pattern: ", pattern.toString());
+        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
+    }
+    protected void setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind displayKind)
+    {
+        this.displayKind = displayKind;
+        display.setValue(displayKind.toString());
+    }
+
+    protected void doAutoDisplay()
+    {
+        if (ledCycleDeadline.hasExpired()) {
+            pattern = pattern.next();
+            displayPattern();
+            ledCycleDeadline.reset();
+        }
+    }
+    protected void displayPattern()
+    {
+        blinkinLedDriver.setPattern(pattern);
+        patternName.setValue(pattern.toString());
+    }
 }
