@@ -135,6 +135,7 @@ public class SAMPLEptpov extends LinearOpMode {
     Acceleration gravity;
     public String direction_FW;
     public String direction_LR;
+    public String direction_TLR;
     public String slowModeON;
     public String direction_ANGLE;
     @Override
@@ -151,7 +152,7 @@ public class SAMPLEptpov extends LinearOpMode {
             });
         }
         init_controls(false,true,true,false,
-                true,true,true,false,false,true,false);
+                true,true,true,false,false,true,true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -176,10 +177,10 @@ public class SAMPLEptpov extends LinearOpMode {
             //////////flash only works with 2 phones
             showFeedback();
             init_controls(false,true,false,false,
-                    true,true,true,false,false,false,true);
-            double y = -gamepad1.left_stick_y; // Remember, this is reversed!
-            double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
-            double rx = gamepad1.right_stick_x;
+                    true,true,true,false,false,false,false);
+            double y = gamepad1.left_stick_y; // Remember, this is reversed!
+            double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
+            double rx = -gamepad1.right_stick_x;
             double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
             double frontLeftPower = (y + x + rx) / denominator;
             double backLeftPower  = (y - x + rx) / denominator;
@@ -345,7 +346,6 @@ public class SAMPLEptpov extends LinearOpMode {
         }else{
             telemetry.addData("Hope", "Auto Works");
         }
-        telemetry.clearAll();
         telemetry.addData("Systems", "Running");
         if (controls){
             showControls();
@@ -390,9 +390,17 @@ public class SAMPLEptpov extends LinearOpMode {
         }if (gamepad1.left_stick_x==0){
             direction_LR="idle";
         }
+        if (gamepad1.right_stick_x>0){
+            direction_TLR="right";
+        }if (gamepad1.right_stick_x<0){
+            direction_TLR="left";
+        }if (gamepad1.right_stick_x==0){
+            direction_TLR="idle";
+        }
         telemetry.addLine()
                 .addData("direction",   direction_FW)
                 .addData("strafe",   direction_LR)
+                .addData("turn",direction_TLR)
                 .addData("r trigger",  "%.2f", gamepad1.right_trigger)
                 .addData("l trigger",  "%.2f", gamepad1.left_trigger);
         if (slowMode==1){
