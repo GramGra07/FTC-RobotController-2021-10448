@@ -249,6 +249,7 @@ public class SAMPLEptpov extends LinearOpMode {
             motorFrontRight.setPower(frontRightPower);
             motorBackRight .setPower(backRightPower );
             sleep(50);
+            teleSpace();
             telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
             telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
             telemetry.addData("Sound >", sounds[soundIndex]);
@@ -412,22 +413,22 @@ public class SAMPLEptpov extends LinearOpMode {
         }if (gamepad1.right_stick_x==0){
             direction_TLR="idle";
         }
+        if (slowMode==1){
+            slowModeON= "True";
+        }else{
+            slowModeON="False";
+        }
         telemetry.addLine()
                 .addData("direction",   direction_FW)
                 .addData("strafe",   direction_LR)
                 .addData("turn",direction_TLR)
                 .addData("r trigger",  "%.2f", gamepad1.right_trigger)
                 .addData("l trigger",  "%.2f", gamepad1.left_trigger);
-        if (slowMode==1){
-            slowModeON= "True";
-        }else{
-            slowModeON="False";
-        }
+        teleSpace();
         telemetry.addData("slowMode",slowModeON);
+        teleSpace();
         telemetry.addData("Heading","%.2f", angles.firstAngle);
-        //if (colorSensor instanceof DistanceSensor) {
-        //    telemetry.addData("Color Distance (cm)", "%.3f", ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM));
-        //}
+        teleSpace();
         NormalizedRGBA colors = colorSensor.getNormalizedColors();
         Color.colorToHSV(colors.toColor(), hsvValues);
         telemetry.addLine()
@@ -440,6 +441,7 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addData("Alpha", "%.3f", colors.alpha);
         get_color_name(colors.red,colors.green,colors.blue);
         telemetry.addData("Color",name);
+        teleSpace();
         access_pushSensor();
         getDistance(true);
         telemetry.addData("Heading","%.1f",angles.firstAngle);
