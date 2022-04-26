@@ -434,28 +434,12 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Heading","%.1f", angles.firstAngle);
         telemetry.addData("Heading Direction",direction_ANGLE);
         teleSpace();
-        colors();
+        getColors();
         teleSpace();
         access_pushSensor();
         getDistance(true);
         teleSpace();
         //composeTelemetry();//imu
-    }
-    public void colors(){
-        NormalizedRGBA colors = sensor_color.getNormalizedColors();
-        Color.colorToHSV(colors.toColor(), hsvValues);
-        telemetry.addLine()
-                .addData("Red", "%.3f", colors.red)
-                .addData("Green", "%.3f", colors.green)
-                .addData("Blue", "%.3f", colors.blue)
-                .addData("Hue", "%.3f", hsvValues[0])
-                .addData("Saturation", "%.3f", hsvValues[1])
-                .addData("Value", "%.3f", hsvValues[2])
-                .addData("Alpha", "%.3f", colors.alpha);
-        get_color_name(colors.red, colors.green, colors.blue);
-        telemetry.addLine()
-                .addData("Color", name)
-                .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
     }
     //gyroscope with heading pitch and roll
     public void imu(){
@@ -617,6 +601,22 @@ public class SAMPLEptpov extends LinearOpMode {
                 relativeLayout.setBackgroundColor(Color.HSVToColor(hsvValues));
             }
         });
+    }
+    public void getColors(){
+        NormalizedRGBA colors = sensor_color.getNormalizedColors();
+        Color.colorToHSV(colors.toColor(), hsvValues);
+        telemetry.addLine()
+                .addData("Red", "%.3f", colors.red)
+                .addData("Green", "%.3f", colors.green)
+                .addData("Blue", "%.3f", colors.blue)
+                .addData("Hue", "%.3f", hsvValues[0])
+                .addData("Saturation", "%.3f", hsvValues[1])
+                .addData("Value", "%.3f", hsvValues[2])
+                .addData("Alpha", "%.3f", colors.alpha);
+        get_color_name(colors.red, colors.green, colors.blue);
+        telemetry.addLine()
+                .addData("Color", name)
+                .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
     }
     public void get_color_name(float red,float green,float blue){
         if ((red<=1) && (red >=0.9375)&& (green<=1)&&(green>=0.8671875) && (blue<=1)&&(blue>=0.67578125)){
