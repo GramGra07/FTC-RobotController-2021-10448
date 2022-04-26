@@ -128,6 +128,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public String slowModeON;
     public String direction_ANGLE;
     public double headingVal=0;
+    public double directionPower=0;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -248,18 +249,19 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
 
-    public void dance(int direction) {//-1=back//1=forward
-        if (direction == -1) {
-            motorFrontLeft.setPower(-direction);
-            motorBackLeft.setPower(-direction);
-            motorFrontRight.setPower(-direction);
-            motorBackRight.setPower(-direction);
+    public void dance(String direction_1) {//-1=back//1=forward
+        directionPower=1;
+        if (direction_1.equals("backwards")) {
+            motorFrontLeft.setPower(-directionPower);
+            motorBackLeft.setPower(-directionPower);
+            motorFrontRight.setPower(directionPower);
+            motorBackRight.setPower(-directionPower);
         }
-        if (direction == 1) {
-            motorFrontLeft.setPower(direction);
-            motorBackLeft.setPower(-direction);
-            motorFrontRight.setPower(direction);
-            motorBackRight.setPower(direction);
+        if (direction_1.equals("forwards")) {
+            motorFrontLeft.setPower(directionPower);
+            motorBackLeft.setPower(-directionPower);
+            motorFrontRight.setPower(directionPower);
+            motorBackRight.setPower(directionPower);
         }
     }
 
