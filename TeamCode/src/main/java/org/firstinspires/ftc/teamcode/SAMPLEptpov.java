@@ -165,9 +165,9 @@ public class SAMPLEptpov extends LinearOpMode {
         composeTelemetry();
         while (opModeIsActive()) {
             //////////flash only works with 2 phones
-            showFeedback(false);
-            init_controls(false, false, false, false,
-                    false, true, true, false, false, false, false);
+            showFeedback(true);
+            init_controls(false, true, false, false,
+                    true, true, true, false, false, false, false);
             double y = gamepad1.left_stick_y; // Remember, this is reversed!
             double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = -gamepad1.right_stick_x;
@@ -250,16 +250,16 @@ public class SAMPLEptpov extends LinearOpMode {
 
     public void dance(int direction) {//-1=back//1=forward
         if (direction == -1) {
-            motorFrontLeft.setPower(-direction - 0.2);
-            motorBackLeft.setPower(direction);
-            motorFrontRight.setPower(-direction - 0.2);
-            motorBackRight.setPower(direction);
+            motorFrontLeft.setPower(-direction);
+            motorBackLeft.setPower(-direction);
+            motorFrontRight.setPower(-direction);
+            motorBackRight.setPower(-direction);
         }
         if (direction == 1) {
             motorFrontLeft.setPower(direction);
-            motorBackLeft.setPower(-direction - 0.2);
+            motorBackLeft.setPower(-direction);
             motorFrontRight.setPower(direction);
-            motorBackRight.setPower(-direction - 0.2);
+            motorBackRight.setPower(direction);
         }
     }
 
