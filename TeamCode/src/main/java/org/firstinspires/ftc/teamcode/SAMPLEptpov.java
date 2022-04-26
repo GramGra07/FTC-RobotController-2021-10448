@@ -15,8 +15,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -49,7 +49,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public DcMotor motorBackRight = null;
     //devices
     DigitalChannel digitalTouch;
-    NormalizedColorSensor colorSensor;
+    NormalizedColorSensor sensor_color;
     View relativeLayout;
     DistanceSensor distance1;
     //
@@ -142,8 +142,8 @@ public class SAMPLEptpov extends LinearOpMode {
                 }
             });
         }
-        init_controls(false, false, true, false,
-                false, true, true, false, false, true, true);
+        init_controls(false, true, true, false,
+                true, true, true, false, false, true, true);
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0 / 9.0);
@@ -304,7 +304,7 @@ public class SAMPLEptpov extends LinearOpMode {
         digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
 
         if (color_sensor) {
-            colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
+            sensor_color = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
         }
         if (distance_sensor) {
             distance1 = hardwareMap.get(DistanceSensor.class, "distance_1");
@@ -434,27 +434,28 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Heading","%.1f", angles.firstAngle);
         telemetry.addData("Heading Direction",direction_ANGLE);
         teleSpace();
-        if (color_sensor) {
-            NormalizedRGBA colors = colorSensor.getNormalizedColors();
-            Color.colorToHSV(colors.toColor(), hsvValues);
-            telemetry.addLine()
-                    .addData("Red", "%.3f", colors.red)
-                    .addData("Green", "%.3f", colors.green)
-                    .addData("Blue", "%.3f", colors.blue)
-                    .addData("Hue", "%.3f", hsvValues[0])
-                    .addData("Saturation", "%.3f", hsvValues[1])
-                    .addData("Value", "%.3f", hsvValues[2])
-                    .addData("Alpha", "%.3f", colors.alpha);
-            get_color_name(colors.red, colors.green, colors.blue);
-            telemetry.addLine()
-                    .addData("Color", name)
-                    .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
-            teleSpace();
-        }
+        colors();
+        teleSpace();
         access_pushSensor();
         getDistance(true);
         teleSpace();
         //composeTelemetry();//imu
+    }
+    public void colors(){
+        NormalizedRGBA colors = sensor_color.getNormalizedColors();
+        Color.colorToHSV(colors.toColor(), hsvValues);
+        telemetry.addLine()
+                .addData("Red", "%.3f", colors.red)
+                .addData("Green", "%.3f", colors.green)
+                .addData("Blue", "%.3f", colors.blue)
+                .addData("Hue", "%.3f", hsvValues[0])
+                .addData("Saturation", "%.3f", hsvValues[1])
+                .addData("Value", "%.3f", hsvValues[2])
+                .addData("Alpha", "%.3f", colors.alpha);
+        get_color_name(colors.red, colors.green, colors.blue);
+        telemetry.addLine()
+                .addData("Color", name)
+                .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
     }
     //gyroscope with heading pitch and roll
     public void imu(){
@@ -609,7 +610,7 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //colors
     public void init_colorSensor(){
-        colorSensor.setGain(10);
+        sensor_color.setGain(10);
 
         relativeLayout.post(new Runnable() {
             public void run() {
@@ -640,8 +641,8 @@ public class SAMPLEptpov extends LinearOpMode {
     public void runSample() {
         //float gain=2;
         final float[] hsvValues = new float[3];
-        if (colorSensor instanceof SwitchableLight) {
-            ((SwitchableLight) colorSensor).enableLight(true);
+        if (sensor_color instanceof SwitchableLight) {
+            ((SwitchableLight) sensor_color).enableLight(true);
         }
     }
     //ENCODER
