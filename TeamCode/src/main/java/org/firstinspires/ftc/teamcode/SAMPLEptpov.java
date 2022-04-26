@@ -168,7 +168,7 @@ public class SAMPLEptpov extends LinearOpMode {
             //////////flash only works with 2 phones
             showFeedback(true);
             init_controls(false, true, false, false,
-                    true, true, true, false, false, false, false);
+                    true, true, true, false, false, false, false);//only imu if first init
             double y = gamepad1.left_stick_y; // Remember, this is reversed!
             double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = -gamepad1.right_stick_x;
@@ -271,21 +271,6 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addData("", "");
 
     }
-    public void directionalHeading(){
-        headingVal=angles.firstAngle;
-        if (headingVal>45 && headingVal<135){
-            direction_ANGLE="right";
-        }
-        if (headingVal<-45 && headingVal<45){
-            direction_ANGLE="forward";
-        }
-        if (headingVal>135 && headingVal>-135){
-            direction_ANGLE="backwards";
-        }
-        if (headingVal>-45 && headingVal<-135){
-            direction_ANGLE="left";
-        }
-    }
 //IMPORTANT INIT
     //will initiate all and give names of objects
     public void init_all(boolean motors, boolean servos, boolean color_sensor, boolean distance_sensor) {
@@ -322,9 +307,9 @@ public class SAMPLEptpov extends LinearOpMode {
                 resetEncoder();
                 telemetry.addData("Encoders", "Running");
             }
-        }
-        if (imu) {
-            imu();
+            if (imu){
+                imu();
+            }
         }
         if (rumble) {
             init_rumble();
@@ -395,27 +380,7 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //telemetry additions
     public void showFeedback(boolean color_sensor){
-        if (gamepad1.left_stick_y<0){
-            direction_FW="forward";
-        }if (gamepad1.left_stick_y>0){
-            direction_FW="backward";
-        }if (gamepad1.left_stick_y==0){
-            direction_FW="idle";
-        }
-        if (gamepad1.left_stick_x>0){
-            direction_LR="right";
-        }if (gamepad1.left_stick_x<0){
-            direction_LR="left";
-        }if (gamepad1.left_stick_x==0){
-            direction_LR="idle";
-        }
-        if (gamepad1.right_stick_x>0){
-            direction_TLR="right";
-        }if (gamepad1.right_stick_x<0){
-            direction_TLR="left";
-        }if (gamepad1.right_stick_x==0){
-            direction_TLR="idle";
-        }
+        get_directions();
         if (slowMode==1){
             slowModeON= "True";
         }else{
@@ -437,7 +402,7 @@ public class SAMPLEptpov extends LinearOpMode {
         getColors();
         teleSpace();
         access_pushSensor();
-        getDistance(true);
+        getDistance1(true);
         teleSpace();
         //composeTelemetry();//imu
     }
@@ -454,6 +419,21 @@ public class SAMPLEptpov extends LinearOpMode {
         imu.initialize(parameters);
         angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         gravity  = imu.getGravity();
+    }
+    public void directionalHeading(){
+        headingVal=angles.firstAngle;
+        if (headingVal>45 && headingVal<135){
+            direction_ANGLE="right";
+        }
+        if (headingVal<-45 && headingVal<45){
+            direction_ANGLE="forward";
+        }
+        if (headingVal>135 && headingVal>-135){
+            direction_ANGLE="backwards";
+        }
+        if (headingVal>-45 && headingVal<-135){
+            direction_ANGLE="left";
+        }
     }
     //endgame effects//dont really work well
     public void endGame(boolean flash){
@@ -473,6 +453,30 @@ public class SAMPLEptpov extends LinearOpMode {
             relativeLayout.setBackgroundColor(10);
         }
     }
+    //directions
+    public void get_directions(){
+        if (gamepad1.left_stick_y<0){
+            direction_FW="forward";
+        }if (gamepad1.left_stick_y>0){
+            direction_FW="backward";
+        }if (gamepad1.left_stick_y==0){
+            direction_FW="idle";
+        }
+        if (gamepad1.left_stick_x>0){
+            direction_LR="right";
+        }if (gamepad1.left_stick_x<0){
+            direction_LR="left";
+        }if (gamepad1.left_stick_x==0){
+            direction_LR="idle";
+        }
+        if (gamepad1.right_stick_x>0){
+            direction_TLR="right";
+        }if (gamepad1.right_stick_x<0){
+            direction_TLR="left";
+        }if (gamepad1.right_stick_x==0){
+            direction_TLR="idle";
+        }
+    }
     //range
     //gets the values and finds if it is in a range of max to min
     public void inRange(boolean heading,int maxH,int minH,boolean sensor,int sensor_number,int maxD,int minD,String unit){
@@ -485,7 +489,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         if (sensor){
             if (sensor_number==1){
-                getDistance(false);
+                getDistance1(false);
                 if (unit.equals("cm")){
                     if (CM_distance1>=minD && CM_distance1<=maxD){
                         inRange=true;
@@ -727,7 +731,7 @@ public class SAMPLEptpov extends LinearOpMode {
                 .build();
     }
     //distance
-    public void getDistance(boolean give){
+    public void getDistance1(boolean give){
         MM_distance1= distance1.getDistance(DistanceUnit.MM);
         CM_distance1= distance1.getDistance(DistanceUnit.CM);
         M_distance1= distance1.getDistance(DistanceUnit.METER);
