@@ -129,6 +129,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public String direction_ANGLE;
     public double headingVal=0;
     public double directionPower=0;
+    public double denominator=1;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -172,11 +173,17 @@ public class SAMPLEptpov extends LinearOpMode {
             double y = gamepad1.left_stick_y; // Remember, this is reversed!
             double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = -gamepad1.right_stick_x;
-            double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
-            double frontLeftPower = (y + x + rx) / denominator;
-            double backLeftPower = (y - x + rx) / denominator;
-            double frontRightPower = (y - x - rx) / denominator;
-            double backRightPower = (y + x - rx) / denominator;
+            double frontLeftPower = (y + x + rx);
+            double backLeftPower  = (y - x + rx);
+            double frontRightPower= (y - x - rx);
+            double backRightPower = (y + x - rx);
+            denominator = Math.max(Math.abs(frontLeftPower) + Math.abs(frontRightPower) , Math.abs(backRightPower)  + Math.abs(backLeftPower));
+            if (denominator>1.0){
+                frontLeftPower /=denominator;
+                backLeftPower  /=denominator;
+                frontRightPower/=denominator;
+                backRightPower /=denominator;
+            }
             //slowmode
             if (gamepad1.start && gamepad1.back && define == 0 && !was_B_down) {
                 define = 1;
@@ -380,81 +387,6 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //telemetry additions
     public void showFeedback(boolean color_sensor){
-        get_directions();
-        if (slowMode==1){
-            slowModeON= "True";
-        }else{
-            slowModeON="False";
-        }
-        directionalHeading();
-        telemetry.addLine()
-                .addData("direction",   direction_FW)
-                .addData("strafe",   direction_LR)
-                .addData("turn",direction_TLR)
-                .addData("r trigger",  "%.2f", gamepad1.right_trigger)
-                .addData("l trigger",  "%.2f", gamepad1.left_trigger);
-        teleSpace();
-        telemetry.addData("slowMode",slowModeON);
-        teleSpace();
-        telemetry.addData("Heading","%.1f", angles.firstAngle);
-        telemetry.addData("Heading Direction",direction_ANGLE);
-        teleSpace();
-        getColors();
-        teleSpace();
-        access_pushSensor();
-        getDistance1(true);
-        teleSpace();
-        //composeTelemetry();//imu
-    }
-    //gyroscope with heading pitch and roll
-    public void imu(){
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled      = true;
-        parameters.loggingTag          = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
-        angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        gravity  = imu.getGravity();
-    }
-    public void directionalHeading(){
-        headingVal=angles.firstAngle;
-        if (headingVal>45 && headingVal<135){
-            direction_ANGLE="right";
-        }
-        if (headingVal<-45 && headingVal<45){
-            direction_ANGLE="forward";
-        }
-        if (headingVal>135 && headingVal>-135){
-            direction_ANGLE="backwards";
-        }
-        if (headingVal>-45 && headingVal<-135){
-            direction_ANGLE="left";
-        }
-    }
-    //endgame effects//dont really work well
-    public void endGame(boolean flash){
-        gamepad1.runRumbleEffect(customRumbleEffect1);
-        gamepad2.runRumbleEffect(customRumbleEffect1);
-        endgame =true;
-        if (flash){
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-        }
-    }
-    //directions
-    public void get_directions(){
         if (gamepad1.left_stick_y<0){
             direction_FW="forward";
         }if (gamepad1.left_stick_y>0){
@@ -475,6 +407,88 @@ public class SAMPLEptpov extends LinearOpMode {
             direction_TLR="left";
         }if (gamepad1.right_stick_x==0){
             direction_TLR="idle";
+        }
+        if (slowMode==1){
+            slowModeON= "True";
+        }else{
+            slowModeON="False";
+        }
+        //direction heading
+        headingVal=angles.firstAngle;
+        if (headingVal>45 && headingVal<135){
+            direction_ANGLE="right";
+        }
+        if (headingVal<-45 && headingVal<45){
+            direction_ANGLE="forward";
+        }
+        if (headingVal>135 && headingVal>-135){
+            direction_ANGLE="backwards";
+        }
+        if (headingVal>-45 && headingVal<-135){
+            direction_ANGLE="left";
+        }
+        telemetry.addLine()
+                .addData("direction",   direction_FW)
+                .addData("strafe",   direction_LR)
+                .addData("turn",direction_TLR)
+                .addData("r trigger",  "%.2f", gamepad1.right_trigger)
+                .addData("l trigger",  "%.2f", gamepad1.left_trigger);
+        teleSpace();
+        telemetry.addData("slowMode",slowModeON);
+        teleSpace();
+        telemetry.addData("Heading","%.1f", angles.firstAngle);
+        telemetry.addData("Heading Direction",direction_ANGLE);
+        teleSpace();
+        NormalizedRGBA colors = sensor_color.getNormalizedColors();
+        Color.colorToHSV(colors.toColor(), hsvValues);
+        telemetry.addLine()
+                .addData("Red", "%.3f", colors.red)
+                .addData("Green", "%.3f", colors.green)
+                .addData("Blue", "%.3f", colors.blue)
+                .addData("Hue", "%.3f", hsvValues[0])
+                .addData("Saturation", "%.3f", hsvValues[1])
+                .addData("Value", "%.3f", hsvValues[2])
+                .addData("Alpha", "%.3f", colors.alpha);
+        get_color_name(colors.red, colors.green, colors.blue);
+        telemetry.addLine()
+                .addData("Color", name)
+                .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
+        teleSpace();
+        access_pushSensor();
+        getDistance1(true);
+        teleSpace();
+        //composeTelemetry();//imu
+    }
+    //gyroscope with heading pitch and roll
+    public void imu(){
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+        angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        gravity  = imu.getGravity();
+    }
+    //endgame effects//dont really work well
+    public void endGame(boolean flash){
+        gamepad1.runRumbleEffect(customRumbleEffect1);
+        gamepad2.runRumbleEffect(customRumbleEffect1);
+        endgame =true;
+        if (flash){
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
+            relativeLayout.setBackgroundColor(0);
+            relativeLayout.setBackgroundColor(10);
         }
     }
     //range
@@ -605,22 +619,6 @@ public class SAMPLEptpov extends LinearOpMode {
                 relativeLayout.setBackgroundColor(Color.HSVToColor(hsvValues));
             }
         });
-    }
-    public void getColors(){
-        NormalizedRGBA colors = sensor_color.getNormalizedColors();
-        Color.colorToHSV(colors.toColor(), hsvValues);
-        telemetry.addLine()
-                .addData("Red", "%.3f", colors.red)
-                .addData("Green", "%.3f", colors.green)
-                .addData("Blue", "%.3f", colors.blue)
-                .addData("Hue", "%.3f", hsvValues[0])
-                .addData("Saturation", "%.3f", hsvValues[1])
-                .addData("Value", "%.3f", hsvValues[2])
-                .addData("Alpha", "%.3f", colors.alpha);
-        get_color_name(colors.red, colors.green, colors.blue);
-        telemetry.addLine()
-                .addData("Color", name)
-                .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
     }
     public void get_color_name(float red,float green,float blue){
         if ((red<=1) && (red >=0.9375)&& (green<=1)&&(green>=0.8671875) && (blue<=1)&&(blue>=0.67578125)){
