@@ -127,6 +127,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public String direction_TLR;
     public String slowModeON;
     public String direction_ANGLE;
+    public String pushSensorCheck;
     public double headingVal=0;
     public double directionPower=0;
     public double denominator=1;
@@ -427,6 +428,11 @@ public class SAMPLEptpov extends LinearOpMode {
         if (headingVal>-45 && headingVal<-135){
             direction_ANGLE="left";
         }
+        if (digitalTouch.getState()) {
+            pushSensorCheck="Not Pressed";
+        } else {
+            pushSensorCheck="Pressed";
+        }
         telemetry.addLine()
                 .addData("direction",   direction_FW)
                 .addData("strafe",   direction_LR)
@@ -454,10 +460,9 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addData("Color", name)
                 .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
         teleSpace();
-        access_pushSensor();
+        telemetry.addData("Digital Touch", pushSensorCheck);
         getDistance1(true);
         teleSpace();
-        //composeTelemetry();//imu
     }
     //gyroscope with heading pitch and roll
     public void imu(){
@@ -756,14 +761,6 @@ public class SAMPLEptpov extends LinearOpMode {
             .addData("distance", String.format("%.0001f cm",CM_distance1))
             .addData("distance", String.format("%.0001f m",M_distance1))
             .addData("distance", String.format("%.0001f in",IN_distance1));
-    }
-    //push Sensor
-    public void access_pushSensor(){
-        if (digitalTouch.getState()) {
-            telemetry.addData("Digital Touch", "Is Not Pressed");
-        } else {
-            telemetry.addData("Digital Touch", "Is Pressed");
-        }
     }
     //all power
     public void allPower (int power){
