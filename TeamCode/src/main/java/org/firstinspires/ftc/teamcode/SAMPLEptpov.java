@@ -130,7 +130,6 @@ public class SAMPLEptpov extends LinearOpMode {
     public String pushSensorCheck;
     public double headingVal=0;
     public double directionPower=0;
-    public double denominator=1;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -174,17 +173,11 @@ public class SAMPLEptpov extends LinearOpMode {
             double y = gamepad1.left_stick_y; // Remember, this is reversed!
             double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
             double rx = -gamepad1.right_stick_x;
-            double frontLeftPower = (y + x + rx);
-            double backLeftPower  = (y - x + rx);
-            double frontRightPower= (y - x - rx);
-            double backRightPower = (y + x - rx);
-            denominator = Math.max(Math.abs(frontLeftPower) + Math.abs(frontRightPower) , Math.abs(backRightPower)  + Math.abs(backLeftPower));
-            if (denominator>1.0){
-                frontLeftPower /=denominator;
-                backLeftPower  /=denominator;
-                frontRightPower/=denominator;
-                backRightPower /=denominator;
-            }
+            double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+            double frontLeftPower = (y + x + rx)/denominator;
+            double backLeftPower  = (y - x + rx)/denominator;
+            double frontRightPower= (y - x - rx)/denominator;
+            double backRightPower = (y + x - rx)/denominator;
             //slowmode
             if (gamepad1.start && gamepad1.back && define == 0 && !was_B_down) {
                 define = 1;
