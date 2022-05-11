@@ -130,6 +130,13 @@ public class SAMPLEptpov extends LinearOpMode {
     public String pushSensorCheck;
     public double headingVal=0;
     public double directionPower=0;
+    //init vars
+    public boolean colors=False;
+    public boolean camera=False;
+    public boolean distance=False;
+    public boolean sound=False;
+    public boolean imu=True;
+    public boolean LED=False;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -301,6 +308,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public void init_controls(boolean auto, boolean color_sensor, boolean first,
                               boolean camera, boolean distance, boolean sound, boolean rumble,
                               boolean LED, boolean encoder, boolean imu, boolean controls) {
+        showFeedback(true);
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
         if (auto) {
