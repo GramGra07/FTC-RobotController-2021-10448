@@ -137,6 +137,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public boolean sound=False;
     public boolean imu=True;
     public boolean LED=False;
+    public boolean push=False;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -152,7 +153,7 @@ public class SAMPLEptpov extends LinearOpMode {
                 });
             }
         }
-        init_controls(false, true, true, false,
+        init_controls(true, true, false,
                 true, true, true, false, false, true, true);
         if (camera){
             if (tfod != null) {
@@ -184,7 +185,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         while (opModeIsActive()) {
             //////////flash only works with 2 phones
-            init_controls(false, true, false, false,
+            init_controls(true, false, false,
                     true, true, true, false, false, false, false);//only imu if first init
             double y = gamepad1.left_stick_y; // Remember, this is reversed!
             double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
@@ -311,8 +312,9 @@ public class SAMPLEptpov extends LinearOpMode {
         if (servos) {
 
         }
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
-
+        if (push){
+            digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
+        }
         if (color_sensor) {
             sensor_color = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
         }
@@ -322,21 +324,12 @@ public class SAMPLEptpov extends LinearOpMode {
     }
 
     //will initiate based on variables and assign variables
-    public void init_controls(boolean auto, boolean color_sensor, boolean first,
+    public void init_controls(boolean color_sensor, boolean first,
                               boolean camera, boolean distance, boolean sound, boolean rumble,
                               boolean LED, boolean encoder, boolean imu, boolean controls) {
         showFeedback(true);
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
-        if (auto) {
-            if (encoder) {
-                resetEncoder();
-                telemetry.addData("Encoders", "Running");
-            }
-            if (imu){
-                imu();
-            }
-        }
         if (rumble) {
             init_rumble();
             telemetry.addData("Rumble", "Running");
@@ -353,6 +346,13 @@ public class SAMPLEptpov extends LinearOpMode {
                 telemetry.addData("Camera", "Running");
                 initVuforia();
                 initTfod();
+            }
+            if (encoder) {
+                resetEncoder();
+                telemetry.addData("Encoders", "Running");
+            }
+            if (imu){
+                imu();
             }
         }
         if (color_sensor) {
@@ -433,23 +433,29 @@ public class SAMPLEptpov extends LinearOpMode {
             slowModeON="False";
         }
         //direction heading
-        headingVal=angles.firstAngle;
-        if (headingVal>45 && headingVal<135){
-            direction_ANGLE="right";
+        if (imu){
+            headingVal=angles.firstAngle;
+            telemetry.addData("Heading","%.1f", angles.firstAngle);
+            telemetry.addData("Heading Direction",direction_ANGLE);
+            if (headingVal>45 && headingVal<135){
+                direction_ANGLE="right";
+            }
+            if (headingVal<-45 && headingVal<45){
+                direction_ANGLE="forward";
+            }
+            if (headingVal>135 && headingVal>-135){
+                direction_ANGLE="backwards";
+            }
+            if (headingVal>-45 && headingVal<-135){
+                direction_ANGLE="left";
+            }
         }
-        if (headingVal<-45 && headingVal<45){
-            direction_ANGLE="forward";
-        }
-        if (headingVal>135 && headingVal>-135){
-            direction_ANGLE="backwards";
-        }
-        if (headingVal>-45 && headingVal<-135){
-            direction_ANGLE="left";
-        }
-        if (digitalTouch.getState()) {
-            pushSensorCheck="Not Pressed";
-        } else {
-            pushSensorCheck="Pressed";
+        if(push){
+            if (digitalTouch.getState()) {
+                pushSensorCheck="Not Pressed";
+            } else {
+                pushSensorCheck="Pressed";
+            }
         }
         telemetry.addLine()
                 .addData("direction",   direction_FW)
@@ -460,26 +466,29 @@ public class SAMPLEptpov extends LinearOpMode {
         teleSpace();
         telemetry.addData("slowMode",slowModeON);
         teleSpace();
-        telemetry.addData("Heading","%.1f", angles.firstAngle);
-        telemetry.addData("Heading Direction",direction_ANGLE);
         teleSpace();
-        NormalizedRGBA colors = sensor_color.getNormalizedColors();
-        Color.colorToHSV(colors.toColor(), hsvValues);
-        telemetry.addLine()
-                .addData("Red", "%.3f", colors.red)
-                .addData("Green", "%.3f", colors.green)
-                .addData("Blue", "%.3f", colors.blue)
-                .addData("Hue", "%.3f", hsvValues[0])
-                .addData("Saturation", "%.3f", hsvValues[1])
-                .addData("Value", "%.3f", hsvValues[2])
-                .addData("Alpha", "%.3f", colors.alpha);
-        get_color_name(colors.red, colors.green, colors.blue);
-        telemetry.addLine()
-                .addData("Color", name)
-                .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
+        if (colors){
+            NormalizedRGBA colors = sensor_color.getNormalizedColors();
+            Color.colorToHSV(colors.toColor(), hsvValues);
+            telemetry.addLine()
+                    .addData("Red", "%.3f", colors.red)
+                    .addData("Green", "%.3f", colors.green)
+                    .addData("Blue", "%.3f", colors.blue)
+                    .addData("Hue", "%.3f", hsvValues[0])
+                    .addData("Saturation", "%.3f", hsvValues[1])
+                    .addData("Value", "%.3f", hsvValues[2])
+                    .addData("Alpha", "%.3f", colors.alpha);
+            get_color_name(colors.red, colors.green, colors.blue);
+            telemetry.addLine()
+                    .addData("Color", name)
+                    .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
+        }
         teleSpace();
+        
         telemetry.addData("Digital Touch", pushSensorCheck);
-        getDistance1(true);
+        if(distance){
+            getDistance1(true);
+        }
         teleSpace();
     }
     //gyroscope with heading pitch and roll
