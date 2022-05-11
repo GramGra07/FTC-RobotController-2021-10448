@@ -141,40 +141,49 @@ public class SAMPLEptpov extends LinearOpMode {
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
         relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
-        try {
-            runSample(); // actually execute the sample
-        } finally {
-            relativeLayout.post(new Runnable() {
-                public void run() {
-                    relativeLayout.setBackgroundColor(Color.WHITE);
-                }
-            });
+        if (colors){
+            try {
+                runSample(); // actually execute the sample
+            } finally {
+                relativeLayout.post(new Runnable() {
+                    public void run() {
+                        relativeLayout.setBackgroundColor(Color.WHITE);
+                 }
+                });
+            }
         }
         init_controls(false, true, true, false,
                 true, true, true, false, false, true, true);
-        if (tfod != null) {
-            tfod.activate();
-            tfod.setZoom(1, 16.0 / 9.0);
+        if (camera){
+            if (tfod != null) {
+                tfod.activate();
+                tfod.setZoom(1, 16.0 / 9.0);
+            }
         }
-        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) distance1;
+        if (distance){
+            Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) distance1;
+        }
         //sound
-        int soundIndex = 0;
-        int soundID = -1;
-        boolean was_dpad_up = false;
-        boolean was_dpad_down = false;
-        boolean was_B_down = false;
-        Context myApp = hardwareMap.appContext;
-        SoundPlayer.PlaySoundParams params = new SoundPlayer.PlaySoundParams();
-        params.loopControl = 0;
-        params.waitForNonLoopingSoundsToFinish = true;
+        if (sound){
+            int soundIndex = 0;
+            int soundID = -1;
+            boolean was_dpad_up = false;
+            boolean was_dpad_down = false;
+            boolean was_B_down = false;
+            Context myApp = hardwareMap.appContext;
+            SoundPlayer.PlaySoundParams params = new SoundPlayer.PlaySoundParams();
+            params.loopControl = 0;
+            params.waitForNonLoopingSoundsToFinish = true;
+        }
         //
         ElapsedTime runtime = new ElapsedTime();
         waitForStart();
-        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
-        composeTelemetry();
+        if (imu){
+            imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+            composeTelemetry();
+        }
         while (opModeIsActive()) {
             //////////flash only works with 2 phones
-            showFeedback(true);
             init_controls(false, true, false, false,
                     true, true, true, false, false, false, false);//only imu if first init
             double y = gamepad1.left_stick_y; // Remember, this is reversed!
@@ -213,28 +222,32 @@ public class SAMPLEptpov extends LinearOpMode {
             }
             //
             ////////sound
-            if (gamepad1.dpad_down && !was_dpad_down) {
-                soundIndex = (soundIndex + 1) % sounds.length;
-            }
-            if (gamepad1.dpad_up && !was_dpad_up) {
-                soundIndex = (soundIndex + sounds.length - 1) % sounds.length;
-            }
-            if (gamepad1.a && !soundPlaying) {
-                if ((soundID = myApp.getResources().getIdentifier(sounds[soundIndex], "raw", myApp.getPackageName())) != 0) {
-                    soundPlaying = true;
-                    SoundPlayer.getInstance().startPlaying(myApp, soundID, params, null,
-                            new Runnable() {
-                                public void run() {
-                                    soundPlaying = false;
-                                }
-                            });
+            if (sound){
+                if (gamepad1.dpad_down && !was_dpad_down) {
+                    soundIndex = (soundIndex + 1) % sounds.length;
+                }
+                if (gamepad1.dpad_up && !was_dpad_up) {
+                    soundIndex = (soundIndex + sounds.length - 1) % sounds.length;
+                }
+                if (gamepad1.a && !soundPlaying) {
+                    if ((soundID = myApp.getResources().getIdentifier(sounds[soundIndex], "raw", myApp.getPackageName())) != 0) {
+                        soundPlaying = true;
+                        SoundPlayer.getInstance().startPlaying(myApp, soundID, params, null,
+                                new Runnable() {
+                                    public void run() {
+                                        soundPlaying = false;
+                                    }
+                                });
+                    }
                 }
             }
             was_dpad_up = gamepad1.dpad_up;
             was_dpad_down = gamepad1.dpad_down;
             was_B_down = gamepad1.b;
             ////////
-            run_vu();
+            if (camera){
+                run_vu();
+            }
             //endgame init
             if ((runtime.seconds() > End_Game) && !endgame) {
                 endGame(true);
@@ -249,10 +262,14 @@ public class SAMPLEptpov extends LinearOpMode {
             motorBackRight.setPower(backRightPower);
             sleep(50);
             teleSpace();
-            telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
-            telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
-            telemetry.addData("Sound >", sounds[soundIndex]);
-            telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
+            if ( distance){
+                telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
+                telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
+            }
+            if(sound){
+                telemetry.addData("Sound >", sounds[soundIndex]);
+                telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
+            }
             telemetry.update();
         }
     }
@@ -260,15 +277,15 @@ public class SAMPLEptpov extends LinearOpMode {
     public void dance(String direction_1) {//-1=back//1=forward
         directionPower=1;
         if (direction_1.equals("backwards")) {
-            motorFrontLeft.setPower(-directionPower);
+            motorFrontLeft.setPower(directionPower);
             motorBackLeft.setPower(-directionPower);
             motorFrontRight.setPower(directionPower);
             motorBackRight.setPower(-directionPower);
         }
         if (direction_1.equals("forwards")) {
-            motorFrontLeft.setPower(directionPower);
-            motorBackLeft.setPower(-directionPower);
-            motorFrontRight.setPower(directionPower);
+            motorFrontLeft.setPower(-directionPower);
+            motorBackLeft.setPower(directionPower);
+            motorFrontRight.setPower(-directionPower);
             motorBackRight.setPower(directionPower);
         }
     }
