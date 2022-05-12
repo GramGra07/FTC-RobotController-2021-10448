@@ -191,16 +191,6 @@ public class SAMPLEptpov extends LinearOpMode {
             double backLeftPower  = (y - x + rx)/denominator;
             double frontRightPower= (y - x - rx)/denominator;
             double backRightPower = (y + x - rx)/denominator;
-            //unused but would be used to show which controller is which
-            ////////if (gamepad1.start && gamepad1.back && define == 0 && !was_B_down) {
-            ////////    define = 1;
-            ////////}
-            ////////if (gamepad1.start && gamepad1.back && define == 1 && !was_B_down) {
-            ////////    define = 0;
-            ////////}
-            ////////if (define == 1) {
-            ////////    defControllers(true);
-            ////////}
             //slowmode
             if (gamepad1.b && slowMode == 0) {
                 slowMode = 1;//sets slowmode to on
@@ -272,7 +262,11 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.update();
         }
     }
-
+    //setServo//this sets the servo to a position based off a given degree
+    public double setServo(int degrees){
+        position = degree_mult * degrees;
+        return position;
+    }
     public void dance(String direction_1) {//-1=back//1=forward
         directionPower=1;
         if (direction_1.equals("backwards")) {
@@ -324,18 +318,18 @@ public class SAMPLEptpov extends LinearOpMode {
         showFeedback();//gives feedback on telemetry
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
-        if (rumble) {
+        if (rumble) {//gamepad rumble
             init_rumble();
             telemetry.addData("Rumble", "Running");
         }
-        if (sound) {
+        if (sound) {//sounds
             telemetry.addData("Sound", "Running");
         }
         if (distance) {
             telemetry.addData("Distance Sensor", "Running");
         }
-        if (first) {
-            init_all(true, false);
+        if (first) {//only on first initiation
+            init_all(true, true);
             if (camera) {
                 telemetry.addData("Camera", "Running");
                 initVuforia();
@@ -350,13 +344,8 @@ public class SAMPLEptpov extends LinearOpMode {
             }
         }
         if (color_sensor) {
-            //colorSensorLight(light);
             init_colorSensor();
             telemetry.addData("Color Sensor", "Running");
-        }
-        telemetry.addData("Systems", "Running");
-        if (controls) {
-            showControls();
         }
         if (LED){
             init_LED();
@@ -364,6 +353,10 @@ public class SAMPLEptpov extends LinearOpMode {
             if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
                 doAutoDisplay();
             }
+        }
+        telemetry.addData("Systems", "Running");
+        if (controls) {
+            showControls();
         }
     }
 
@@ -374,27 +367,11 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Control 1", "b = slowmode");
         telemetry.addData("Control 2", "dpad up/down = cycle songs");
         telemetry.addData("Control 2", "A = play song");
-        telemetry.addData("Control", "");
-    }
-    //show controller 1 vs controller 2
-    public void defControllers(boolean flash){
-        gamepad1.runRumbleEffect(customRumbleEffect3);//1 buzz
-        gamepad2.runRumbleEffect(customRumbleEffect2);//2 buzz
-        if (flash){
-            if (gamepad1.start){
-                relativeLayout.setBackgroundColor(0);
-                relativeLayout.setBackgroundColor(10);
-            }
-            if (gamepad2.start){
-                relativeLayout.setBackgroundColor(0);
-                relativeLayout.setBackgroundColor(10);
-                relativeLayout.setBackgroundColor(0);
-                relativeLayout.setBackgroundColor(10);
-            }
-        }
     }
     //telemetry additions
     public void showFeedback(){
+    //get variables for telemetry
+        //gets direction vertical
         if (gamepad1.left_stick_y<0){
             direction_FW="forward";
         }if (gamepad1.left_stick_y>0){
@@ -402,6 +379,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }if (gamepad1.left_stick_y==0){
             direction_FW="idle";
         }
+        //gets direction horizontal
         if (gamepad1.left_stick_x>0){
             direction_LR="right";
         }if (gamepad1.left_stick_x<0){
@@ -409,6 +387,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }if (gamepad1.left_stick_x==0){
             direction_LR="idle";
         }
+        //gets turn angle
         if (gamepad1.right_stick_x>0){
             direction_TLR="right";
         }if (gamepad1.right_stick_x<0){
@@ -416,6 +395,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }if (gamepad1.right_stick_x==0){
             direction_TLR="idle";
         }
+        //shows slowmode status
         if (slowMode==1){
             slowModeON= "True";
         }else{
@@ -439,6 +419,7 @@ public class SAMPLEptpov extends LinearOpMode {
                 direction_ANGLE="left";
             }
         }
+        //checks push sensor
         if(push){
             if (digitalTouch.getState()) {
                 pushSensorCheck="Not Pressed";
@@ -446,6 +427,7 @@ public class SAMPLEptpov extends LinearOpMode {
                 pushSensorCheck="Pressed";
             }
         }
+    //shows all previously defined values
         telemetry.addLine()
                 .addData("direction",   direction_FW)
                 .addData("strafe",   direction_LR)
@@ -455,7 +437,7 @@ public class SAMPLEptpov extends LinearOpMode {
         teleSpace();
         telemetry.addData("slowMode",slowModeON);
         teleSpace();
-        teleSpace();
+        //gives color values
         if (colors){
             NormalizedRGBA colors = sensor_color.getNormalizedColors();
             Color.colorToHSV(colors.toColor(), hsvValues);
@@ -470,18 +452,21 @@ public class SAMPLEptpov extends LinearOpMode {
             get_color_name(colors.red, colors.green, colors.blue);
             telemetry.addLine()
                     .addData("Color", colorName)
-                    .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
+                    .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");//shows rgb value
         }
         teleSpace();
-        
-        telemetry.addData("Digital Touch", pushSensorCheck);
+        if (push) {
+            telemetry.addData("Digital Touch", pushSensorCheck);
+        }
         if(distance){
-            getDistance1(true);
+            getDistance1(true);//gets and shows distances
         }
         teleSpace();
     }
-    //gyroscope with heading pitch and roll
-    public void imu(){
+//ENDS OVERALL INIT PROCESS
+//INIT ALL DIFFERENT VALUES AND DEVICES
+//imu
+    public void imu(){//gyroscope with heading pitch and roll
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
@@ -494,79 +479,6 @@ public class SAMPLEptpov extends LinearOpMode {
         angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         gravity  = imu.getGravity();
     }
-    //endgame effects
-    public void endGame(boolean flash){
-        gamepad1.runRumbleEffect(customRumbleEffect1);
-        gamepad2.runRumbleEffect(customRumbleEffect1);
-        endgame =true;
-        if (flash){
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-            relativeLayout.setBackgroundColor(0);
-            relativeLayout.setBackgroundColor(10);
-        }
-    }
-    //range
-    //gets the values and finds if it is in a range of max to min
-    public void inRange(boolean heading,int maxH,int minH,boolean sensor,int sensor_number,int maxD,int minD,String unit){
-        if (heading){
-            if (angles.firstAngle>=minH && angles.firstAngle<=maxH){
-                updatedHeadingInRange=true;
-            }else{
-                updatedHeadingInRange=false;
-            }
-        }
-        if (sensor){
-            if (sensor_number==1){
-                getDistance1(false);
-                if (unit.equals("cm")){
-                    if (CM_distance1>=minD && CM_distance1<=maxD){
-                        inRange=true;
-                    }
-                }
-                else if (unit.equals("mm")){
-                    if (MM_distance1>=minD && MM_distance1<=maxD){
-                        inRange=true;
-                    }
-                }
-                else if (unit.equals("in")){
-                    if (IN_distance1>=minD && IN_distance1<=maxD){
-                        inRange=true;
-                    }
-                }
-                else if (unit.equals("m")){
-                    if (M_distance1>=minD && M_distance1<=maxD){
-                        inRange=true;
-                    }
-                }
-                else{
-                    inRange=false;
-                }
-            }
-        }
-        updateRangeTo(inRange);
-    }
-    //update range
-    public void updateRangeTo(boolean condition){
-        updated_inRange= condition;
-        inRange=false;
-    }
-    //resets range
-    public void resetRange(){
-        updated_inRange= false;
-        inRange=false;
-    }
-    //resets the heading
-    public void resetHeading(){
-        updatedHeadingInRange= false;
-    }
-    //imu
     //imu telemetry
     void composeTelemetry() {
 
@@ -631,10 +543,10 @@ public class SAMPLEptpov extends LinearOpMode {
     String formatDegrees(double degrees){
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
-    //colors
+//colors
+//colors
     public void init_colorSensor(){
         sensor_color.setGain(10);
-
         relativeLayout.post(new Runnable() {
             public void run() {
                 relativeLayout.setBackgroundColor(Color.HSVToColor(hsvValues));
@@ -668,7 +580,7 @@ public class SAMPLEptpov extends LinearOpMode {
             ((SwitchableLight) sensor_color).enableLight(true);
         }
     }
-    //ENCODER
+//encoder
     public void resetEncoder(){
         telemetry.addData("Status", "Resetting Encoders");    //
         robot.motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -685,6 +597,177 @@ public class SAMPLEptpov extends LinearOpMode {
                 robot.motorBackLeft.getCurrentPosition(),
                 robot.motorBackRight.getCurrentPosition());
     }
+//distance
+    public void getDistance1(boolean give){
+        MM_distance1= distance1.getDistance(DistanceUnit.MM);
+        CM_distance1= distance1.getDistance(DistanceUnit.CM);
+        M_distance1= distance1.getDistance(DistanceUnit.METER);
+        IN_distance1= distance1.getDistance(DistanceUnit.INCH);
+        //verifyDistance();
+        if (give) {
+            giveDistances();
+        }
+    }
+    public void giveDistances(){
+        telemetry.addLine()
+                .addData("distance", String.format("%.0001f mm",MM_distance1))
+                .addData("distance", String.format("%.0001f cm",CM_distance1))
+                .addData("distance", String.format("%.0001f m",M_distance1))
+                .addData("distance", String.format("%.0001f in",IN_distance1));
+    }
+//camera
+    public void run_vu(){
+        if (tfod != null) {//not nothing
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+            if (updatedRecognitions != null) {
+                telemetry.addData("# Object Detected", updatedRecognitions.size());
+                int i = 0;
+                boolean isDuckDetected = false;
+                for (Recognition recognition : updatedRecognitions) {
+                    telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                    telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                            recognition.getLeft(), recognition.getTop());
+                    telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                            recognition.getRight(), recognition.getBottom());
+                    i++;
+                    if (recognition.getLabel().equals("Duck")) {
+                        isDuckDetected = true;
+                        telemetry.addData("Object Detected", "Duck");
+
+                        if (recognition.getLeft() < 200) {
+                        } else if (recognition.getLeft() < 400) {
+                        } else if (recognition.getLeft() < 600) {
+                        } else {
+                        }
+
+                    } else {
+                    }
+
+                }
+            }
+        }
+    }
+    public void initVuforia() {
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+    }
+    public void initTfod() {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfodParameters.minResultConfidence = 0.3f;
+        tfodParameters.isModelTensorFlow2 = true;
+        tfodParameters.inputSize = 320;
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
+    }
+//Led
+    public void init_LED(){
+        blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+        pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
+        blinkinLedDriver.setPattern(pattern);
+        display = telemetry.addData("Display Kind: ", displayKind.toString());
+        patternName = telemetry.addData("Pattern: ", pattern.toString());
+        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
+    }
+    protected void setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind displayKind)
+    {
+        this.displayKind = displayKind;
+        display.setValue(displayKind.toString());
+    }
+
+    protected void doAutoDisplay()
+    {
+        if (ledCycleDeadline.hasExpired()) {
+            pattern = pattern.next();
+            displayPattern();
+            ledCycleDeadline.reset();
+        }
+    }
+    protected void displayPattern()
+    {
+        blinkinLedDriver.setPattern(pattern);
+        patternName.setValue(pattern.toString());
+    }
+//END OVERALL INIT FUNCTIONS
+    //endgame effects
+    public void endGame(boolean flash){
+        gamepad1.runRumbleEffect(customRumbleEffect1);//gives a custom rumble effect to both gamepads
+        gamepad2.runRumbleEffect(customRumbleEffect1);
+        endgame =true;
+        if (flash){
+            flash();
+        }
+    }
+    public void flash(){//will flash the RC screen
+        relativeLayout.setBackgroundColor(0);
+        relativeLayout.setBackgroundColor(10);
+        relativeLayout.setBackgroundColor(0);
+        relativeLayout.setBackgroundColor(10);
+        relativeLayout.setBackgroundColor(0);
+        relativeLayout.setBackgroundColor(10);
+        relativeLayout.setBackgroundColor(0);
+        relativeLayout.setBackgroundColor(10);
+        relativeLayout.setBackgroundColor(0);
+        relativeLayout.setBackgroundColor(10);
+    }
+    //range
+    //gets the values and finds if it is in a range of max to min
+    public void inRange(boolean heading,int maxH,int minH,boolean sensor,int sensor_number,int maxD,int minD,String unit){
+        if (heading){
+            if (angles.firstAngle>=minH && angles.firstAngle<=maxH){
+                updatedHeadingInRange=true;
+            }else{
+                updatedHeadingInRange=false;
+            }
+        }
+        if (sensor){
+            if (sensor_number==1){
+                getDistance1(false);
+                if (unit.equals("cm")){
+                    if (CM_distance1>=minD && CM_distance1<=maxD){
+                        inRange=true;
+                    }
+                }
+                else if (unit.equals("mm")){
+                    if (MM_distance1>=minD && MM_distance1<=maxD){
+                        inRange=true;
+                    }
+                }
+                else if (unit.equals("in")){
+                    if (IN_distance1>=minD && IN_distance1<=maxD){
+                        inRange=true;
+                    }
+                }
+                else if (unit.equals("m")){
+                    if (M_distance1>=minD && M_distance1<=maxD){
+                        inRange=true;
+                    }
+                }
+                else{
+                    inRange=false;
+                }
+            }
+        }
+        updateRangeTo(inRange);
+    }
+    //update range
+    public void updateRangeTo(boolean condition){
+        updated_inRange= condition;
+        inRange=false;
+    }
+    //resets range
+    public void resetRange(){
+        updated_inRange= false;
+        inRange=false;
+    }
+    //resets the heading
+    public void resetHeading(){
+        updatedHeadingInRange= false;
+    }
+//encoder driving
     public void encoderDrive(double speed,
                              double leftInches, double rightInches,
                              double timeoutS) {
@@ -725,10 +808,6 @@ public class SAMPLEptpov extends LinearOpMode {
             robot.motorBackRight .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
-///////setServo
-    public void setServo(int degrees){
-        position = degree_mult * degrees;
-    }
     //gamepadrumble
     public void init_rumble(){
         customRumbleEffect1 = new Gamepad.RumbleEffect.Builder()//rumble2=right side
@@ -749,116 +828,11 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addStep(0.0, 0.0, 250)  //  Pause for 300 mSec
                 .build();
     }
-    //distance
-    public void getDistance1(boolean give){
-        MM_distance1= distance1.getDistance(DistanceUnit.MM);
-        CM_distance1= distance1.getDistance(DistanceUnit.CM);
-        M_distance1= distance1.getDistance(DistanceUnit.METER);
-        IN_distance1= distance1.getDistance(DistanceUnit.INCH);
-        //verifyDistance();
-        if (give) {
-            giveDistances();
-        }
-    }
-    public void verifyDistance(){
-        if (MM_distance1*10 !=CM_distance1){
-            telemetry.addData("DISTANCE","ERROR");
-        }else if (CM_distance1*100 !=M_distance1){
-            telemetry.addData("DISTANCE","ERROR");
-        //} else if (IN_distance*0.393701 !=CM_distance){
-         //   telemetry.addData("DISTANCE","ERROR");
-        } else{
-            giveDistances();
-        }
-    }
-    public void giveDistances(){
-        telemetry.addLine()
-            .addData("distance", String.format("%.0001f mm",MM_distance1))
-            .addData("distance", String.format("%.0001f cm",CM_distance1))
-            .addData("distance", String.format("%.0001f m",M_distance1))
-            .addData("distance", String.format("%.0001f in",IN_distance1));
-    }
     //all power
     public void allPower (int power){
         motorFrontLeft.setPower(power);
         motorBackLeft.setPower(power);
         motorFrontRight.setPower(power);
         motorBackRight.setPower(power);
-    }
-    //vuforia
-    public void run_vu(){
-        //vuforia
-        if (tfod != null) {
-            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-            if (updatedRecognitions != null) {
-                telemetry.addData("# Object Detected", updatedRecognitions.size());
-                int i = 0;
-                boolean isDuckDetected = false;
-                for (Recognition recognition : updatedRecognitions) {
-                    telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                    telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                            recognition.getLeft(), recognition.getTop());
-                    telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                            recognition.getRight(), recognition.getBottom());
-                    i++;
-                    if (recognition.getLabel().equals("Duck")) {
-                        isDuckDetected = true;
-                        telemetry.addData("Object Detected", "Duck");
-
-                        if (recognition.getLeft() < 200) {
-                        } else if (recognition.getLeft() < 400) {
-                        } else if (recognition.getLeft() < 600) {
-                        } else {
-                        }
-
-                    } else {
-                    }
-
-                }}}
-        //////////////ends vuforia
-    }
-    public void initVuforia() {
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-    }
-    public void initTfod() {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfodParameters.minResultConfidence = 0.3f;
-        tfodParameters.isModelTensorFlow2 = true;
-        tfodParameters.inputSize = 320;
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
-    }
-    //Led
-    public void init_LED(){
-        blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
-        pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
-        blinkinLedDriver.setPattern(pattern);
-        display = telemetry.addData("Display Kind: ", displayKind.toString());
-        patternName = telemetry.addData("Pattern: ", pattern.toString());
-        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
-    }
-    protected void setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind displayKind)
-    {
-        this.displayKind = displayKind;
-        display.setValue(displayKind.toString());
-    }
-
-    protected void doAutoDisplay()
-    {
-        if (ledCycleDeadline.hasExpired()) {
-            pattern = pattern.next();
-            displayPattern();
-            ledCycleDeadline.reset();
-        }
-    }
-    protected void displayPattern()
-    {
-        blinkinLedDriver.setPattern(pattern);
-        patternName.setValue(pattern.toString());
     }
 }
