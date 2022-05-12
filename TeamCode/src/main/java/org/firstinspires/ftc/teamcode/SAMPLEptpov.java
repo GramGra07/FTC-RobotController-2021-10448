@@ -113,8 +113,6 @@ public class SAMPLEptpov extends LinearOpMode {
             "ss_mf_fail", "ss_laser", "ss_laser_burst", "ss_light_saber", "ss_light_saber_long", "ss_light_saber_short",
             "ss_light_speed", "ss_mine", "ss_power_up", "ss_r2d2_up", "ss_roger_roger", "ss_siren", "ss_wookie"};
     boolean soundPlaying = false; //finds if the sound is actually playing
-    //variable
-    public double define = 0; // 0 = off
     //encoders
     static final double COUNTS_PER_MOTOR_REV = 1200;    // eg: TETRIX Motor Encoder//counts per rotation
     static final double DRIVE_GEAR_REDUCTION = .05;     // This is < 1.0 if geared UP//how much gears
@@ -165,7 +163,7 @@ public class SAMPLEptpov extends LinearOpMode {
         Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) distance1;//helps init distance sensors
         //sound
         int soundIndex = 0;//gets value in list of sounds
-        int soundID = -1;
+        int soundID;
         Context myApp = hardwareMap.appContext;//gets app content
         SoundPlayer.PlaySoundParams params = new SoundPlayer.PlaySoundParams();//play new song
         params.loopControl = 0;
@@ -574,8 +572,6 @@ public class SAMPLEptpov extends LinearOpMode {
         blueVal= (int) (blue*256);
     }
     public void runSample() {
-        //float gain=2;
-        final float[] hsvValues = new float[3];
         if (sensor_color instanceof SwitchableLight) {
             ((SwitchableLight) sensor_color).enableLight(true);
         }
@@ -827,12 +823,5 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
                 .addStep(0.0, 0.0, 250)  //  Pause for 300 mSec
                 .build();
-    }
-    //all power
-    public void allPower (int power){
-        motorFrontLeft.setPower(power);
-        motorBackLeft.setPower(power);
-        motorFrontRight.setPower(power);
-        motorBackRight.setPower(power);
     }
 }
