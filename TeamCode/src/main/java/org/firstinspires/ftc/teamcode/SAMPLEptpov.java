@@ -42,179 +42,176 @@ import java.util.Locale;
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot = new HardwarePushbot();   // Use a Pushbot's hardware
-    //motors
+//motors
     public DcMotor motorFrontLeft = null;
     public DcMotor motorBackLeft = null;
     public DcMotor motorFrontRight = null;
     public DcMotor motorBackRight = null;
-    //devices
-    DigitalChannel digitalTouch;
-    NormalizedColorSensor sensor_color;
-    View relativeLayout;
-    DistanceSensor distance1;
-    //
-    BNO055IMU imu;
-    Orientation angles;
-    Acceleration gravity;
-    //slowmode
-    double slowMode = 0; //0 is off
-    double regular_divider = 1;
-    double slowMode_divider = 2;
-    //colorSensor
-    final float[] hsvValues = new float[3];
-    //servo
-    public double position = 0;
-    public double degree_mult = 0.00277777777;
-    //in range
-    boolean inRange = false;
-    boolean updated_inRange = false;
-    boolean updatedHeadingInRange = false;
-    //rumble
-    boolean endgame = false;                 // Use to prevent multiple half-time warning rumbles.
-    Gamepad.RumbleEffect customRumbleEffect1;    // Use to build a custom rumble sequence.
-    Gamepad.RumbleEffect customRumbleEffect2;
-    Gamepad.RumbleEffect customRumbleEffect3;
-    final double End_Game = 75.0;              // Wait this many seconds before rumble-alert for half-time.
-    //led
-    private final static int LED_PERIOD = 10;//every 10 seconds
-    RevBlinkinLedDriver blinkinLedDriver;
-    RevBlinkinLedDriver.BlinkinPattern pattern;
-    Telemetry.Item patternName;
+//servo
+
+    //vars
+    public double position = 0;//sets servo position to 0-1 multiplier
+    public double degree_mult = 0.00277777777;//Multiplies this by degrees to see exact position in degrees
+//devices
+    DigitalChannel digitalTouch;    //push sensor
+    NormalizedColorSensor sensor_color;    //color sensor
+    View relativeLayout;   //for 2 phones, puts colors on RC
+    DistanceSensor distance1;   //distance sensor
+    //imu ( inside expansion hub )
+    BNO055IMU imu;    //imu module inside expansion hub
+    Orientation angles;     //imu uses these to find angles and classify them
+    Acceleration gravity;    //Imu uses to get acceleration
+    // led
+    RevBlinkinLedDriver blinkinLedDriver;//init led driver
+    RevBlinkinLedDriver.BlinkinPattern pattern;//led driver pattern
+    Telemetry.Item patternName;//shows pattern
     Telemetry.Item display;
-    org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind displayKind;
+    org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind displayKind;//gives display kind between manual and auto
     Deadline ledCycleDeadline;
-    //vuforia
-    public double levelRead = 0;
-    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
+    //distance
+    public double MM_distance1 = 0;//mm distance for distance sensor 1
+    public double CM_distance1 = 0;//cm distance for distance sensor 1
+    public double M_distance1 = 0;//m distance for distance sensor 1
+    public double IN_distance1 = 0;//in distance for distance sensor 1
+    //camera
+        //vuforia
+    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";//init tfod
     private static final String[] LABELS = {
             "Ball",
             "Cube",
             "Duck",
             "Marker"
     };
-    private static final String VUFORIA_KEY =
+    private static final String VUFORIA_KEY = //to actually use vuforia
             "AXmzBcj/////AAABme5HSJ/H3Ucup73WSIaV87tx/sFHYaWfor9OZVg6afr2Bw7kNolHd+mF5Ps91SlQpgBHulieI0jcd86kqJSwx46BZ8v8DS5S5x//eQWMEGjMDnvco4/oTcDwuSOLIVZG2UtLmJXPS1L3CipjabePFlqAL2JtBlN78p6ZZbRFSHW680hWEMSimZuQy/cMudD7J/MjMjMs7b925b8BkijlnTQYr7CbSlXrpDh5K+9fLlk2OyEZ4w7tm7e4UJDInJ/T3oi8PqqKCqkUaTkJWlQsvoELbDu5L2FgzsuDhBLe2rHtJRqfORd7n+6M30UdFSsxqq5TaZztkWgzRUr1GC3yBSTS6iFqEuL3g06GrfwOJF0F";
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
+    //colorSensor
+    final float[] hsvValues = new float[3];//gets values for color sensor
+    //color
+    public int redVal = 0;//the red value in rgb
+    public int greenVal = 0;//the green value in rgb
+    public int blueVal = 0;//the blue value in rgb
+    public String colorName = "N/A";//gets color name
+//other vars
+    //slowmode
+    double slowMode = 0; //0 is off
+    double regular_divider = 1;  //tells slowmode how fast to go when not on
+    double slowMode_divider = 2; //half speed when slowmode
+    //in range
+    boolean inRange = false;//tested to see if distance sensor is in range
+    boolean updated_inRange = false;//tests again to a boolean for if in range
+    boolean updatedHeadingInRange = false;//heading check for low to high
+    //rumble
+    boolean endgame = false;                 // Use to prevent multiple half-time warning rumbles.
+    Gamepad.RumbleEffect customRumbleEffect1;    // Use to build a custom rumble sequence.
+    Gamepad.RumbleEffect customRumbleEffect2;//custom rumble
+    Gamepad.RumbleEffect customRumbleEffect3;//custom rumble
+    final double End_Game = 75.0;              // Wait this many seconds before rumble-alert for half-time.
     //sounds
     String sounds[] = {"ss_alarm", "ss_bb8_down", "ss_bb8_up", "ss_darth_vader", "ss_fly_by",
             "ss_mf_fail", "ss_laser", "ss_laser_burst", "ss_light_saber", "ss_light_saber_long", "ss_light_saber_short",
             "ss_light_speed", "ss_mine", "ss_power_up", "ss_r2d2_up", "ss_roger_roger", "ss_siren", "ss_wookie"};
-    boolean soundPlaying = false;
-    //distance
-    public double MM_distance1 = 0;
-    public double CM_distance1 = 0;
-    public double M_distance1 = 0;
-    public double IN_distance1 = 0;
-    //color
-    public int redVal = 0;
-    public int greenVal = 0;
-    public int blueVal = 0;
-    public String name = "N/A";
+    boolean soundPlaying = false; //finds if the sound is actually playing
     //variable
-    public double define = 0; // 0 = off1
+    public double define = 0; // 0 = off
     //encoders
-    static final double COUNTS_PER_MOTOR_REV = 1200;    // eg: TETRIX Motor Encoder
-    static final double DRIVE_GEAR_REDUCTION = .20;     // This is < 1.0 if geared UP
+    static final double COUNTS_PER_MOTOR_REV = 1200;    // eg: TETRIX Motor Encoder//counts per rotation
+    static final double DRIVE_GEAR_REDUCTION = .05;     // This is < 1.0 if geared UP//how much gears
     static final double WHEEL_DIAMETER_INCHES = 4.6950;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * 3.1415);
-    static final double DRIVE_SPEED = 0.6;
-    static final double TURN_SPEED = 0.5;
-    //telemetry
-    public String direction_FW;
-    public String direction_LR;
-    public String direction_TLR;
-    public String slowModeON;
-    public String direction_ANGLE;
-    public String pushSensorCheck;
-    public double headingVal=0;
-    public double directionPower=0;
-    //init vars
-    public boolean colors=False;
-    public boolean camera=False;
-    public boolean distance=False;
-    public boolean sound=False;
-    public boolean imu=True;
-    public boolean LED=False;
-    public boolean push=False;
+            (WHEEL_DIAMETER_INCHES * 3.1415);//to get the counts per inch
+//telemetry
+    public String direction_FW;//string of direction
+    public String direction_LR;//string of direction
+    public String direction_TLR;//string of direction
+    public String slowModeON;//slowmode string ex(on or off)
+    public String direction_ANGLE;//string of angle
+    public String pushSensorCheck;//shows value from push sensor
+    public double headingVal=0;//heading in degrees
+    public double directionPower=0;//power in specified direction
+//init vars (used in initiation process)
+    public boolean colors=false;//tells to init
+    public boolean camera=false;//tells to init
+    public boolean distance=false;//tells to init
+    public boolean sound=false;//tells to init
+    public boolean imuInit=true;//tells to init
+    public boolean LED=false;//tells to init
+    public boolean push=false;//tells to init
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
         relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
-        if (colors){
+        //relative layout is the background on the RC phone which can be used to test color sensors
+        if (colors){//if colors is being used
             try {
                 runSample(); // actually execute the sample
             } finally {
                 relativeLayout.post(new Runnable() {
                     public void run() {
-                        relativeLayout.setBackgroundColor(Color.WHITE);
+                        relativeLayout.setBackgroundColor(Color.WHITE);//RC phone background
                  }
                 });
             }
         }
-        init_controls(true, true, false,
-                true, true, true, false, false, true, true);
+        init_controls(colors, true, camera,
+                distance, sound, true, LED, false, imuInit, true);//initiates everything
         if (camera){
             if (tfod != null) {
                 tfod.activate();
                 tfod.setZoom(1, 16.0 / 9.0);
             }
         }
-        if (distance){
-            Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) distance1;
-        }
+        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) distance1;//helps init distance sensors
         //sound
-        if (sound){
-            int soundIndex = 0;
-            int soundID = -1;
-            boolean was_dpad_up = false;
-            boolean was_dpad_down = false;
-            boolean was_B_down = false;
-            Context myApp = hardwareMap.appContext;
-            SoundPlayer.PlaySoundParams params = new SoundPlayer.PlaySoundParams();
-            params.loopControl = 0;
-            params.waitForNonLoopingSoundsToFinish = true;
-        }
+        int soundIndex = 0;//gets value in list of sounds
+        int soundID = -1;
+        Context myApp = hardwareMap.appContext;//gets app content
+        SoundPlayer.PlaySoundParams params = new SoundPlayer.PlaySoundParams();//play new song
+        params.loopControl = 0;
+        params.waitForNonLoopingSoundsToFinish = true;
+        boolean was_dpad_up = false;//checks if dpad was pressed
+        boolean was_dpad_down = false;//checks if dpad was pressed
+        boolean was_B_down = false;//checks if b was pressed
         //
-        ElapsedTime runtime = new ElapsedTime();
+        ElapsedTime runtime = new ElapsedTime();//runtime helps with endgame initiation and cues
         waitForStart();
-        if (imu){
+        if (imuInit){//will set up everything for imu
             imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
             composeTelemetry();
         }
         while (opModeIsActive()) {
-            //////////flash only works with 2 phones
-            init_controls(true, false, false,
-                    true, true, true, false, false, false, false);//only imu if first init
-            double y = gamepad1.left_stick_y; // Remember, this is reversed!
-            double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
-            double rx = -gamepad1.right_stick_x;
-            double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+            init_controls(colors, false, camera,
+                    distance, sound, true, LED, false, imuInit, false);//only imu if first init//initiates everything
+            double y = gamepad1.left_stick_y; // Remember, this is reversed!//forward backward
+            double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing//left right
+            double rx = -gamepad1.right_stick_x;//turning
+            double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);//gets max value
             double frontLeftPower = (y + x + rx)/denominator;
             double backLeftPower  = (y - x + rx)/denominator;
             double frontRightPower= (y - x - rx)/denominator;
             double backRightPower = (y + x - rx)/denominator;
+            //unused but would be used to show which controller is which
+            ////////if (gamepad1.start && gamepad1.back && define == 0 && !was_B_down) {
+            ////////    define = 1;
+            ////////}
+            ////////if (gamepad1.start && gamepad1.back && define == 1 && !was_B_down) {
+            ////////    define = 0;
+            ////////}
+            ////////if (define == 1) {
+            ////////    defControllers(true);
+            ////////}
             //slowmode
-            if (gamepad1.start && gamepad1.back && define == 0 && !was_B_down) {
-                define = 1;
-            }
-            if (gamepad1.start && gamepad1.back && define == 1 && !was_B_down) {
-                define = 0;
-            }
-            if (define == 1) {
-                defControllers(true);
-            }
             if (gamepad1.b && slowMode == 0) {
-                slowMode = 1;
+                slowMode = 1;//sets slowmode to on
             } else if (gamepad1.b && slowMode == 1) {
-                slowMode = 0;
+                slowMode = 0;//sets slowmode to off
             }
             if (slowMode == 1) {
-                backRightPower /= slowMode_divider;
-                backLeftPower /= slowMode_divider;
-                frontRightPower /= slowMode_divider;
-                frontLeftPower /= slowMode_divider;
+                backRightPower /= slowMode_divider;//divides power by the divider
+                backLeftPower /= slowMode_divider;//divides power by the divider
+                frontRightPower /= slowMode_divider;//divides power by the divider
+                frontLeftPower /= slowMode_divider;//divides power by the divider
             } else {
                 backRightPower /= regular_divider;
                 backLeftPower /= regular_divider;
@@ -245,27 +242,28 @@ public class SAMPLEptpov extends LinearOpMode {
             was_dpad_up = gamepad1.dpad_up;
             was_dpad_down = gamepad1.dpad_down;
             was_B_down = gamepad1.b;
-            ////////
-            if (camera){
+            //camera run
+            if (camera){//will run vuforia
                 run_vu();
             }
             //endgame init
-            if ((runtime.seconds() > End_Game) && !endgame) {
+            if ((runtime.seconds() > End_Game) && !endgame) {//sets endgame
                 endGame(true);
             }
             if (!endgame) {
-                telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()));
+                telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()));//shows time til endgame
             }
             //
+            //sets power to respective motors
             motorFrontLeft.setPower(frontLeftPower);
             motorBackLeft.setPower(backLeftPower);
             motorFrontRight.setPower(frontRightPower);
             motorBackRight.setPower(backRightPower);
             sleep(50);
-            teleSpace();
+            teleSpace();//puts a space in telemetry
             if ( distance){
-                telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
-                telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
+                telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));//distance sensor
+                telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));//distance sensor
             }
             if(sound){
                 telemetry.addData("Sound >", sounds[soundIndex]);
@@ -290,18 +288,15 @@ public class SAMPLEptpov extends LinearOpMode {
             motorBackRight.setPower(directionPower);
         }
     }
-
     //make space in telemetry read-out
     public void teleSpace() {
-        telemetry.addLine()
-                .addData("", "");
-
+        telemetry.addLine();
     }
 //IMPORTANT INIT
     //will initiate all and give names of objects
-    public void init_all(boolean motors, boolean servos, boolean color_sensor, boolean distance_sensor) {
+    public void init_all(boolean motors, boolean servos) {
         robot.init(hardwareMap);
-        if (motors) {
+        if (motors) {//init all motors
             motorFrontLeft = hardwareMap.get(DcMotor.class, "motorFrontLeft");
             motorBackLeft = hardwareMap.get(DcMotor.class, "motorBackLeft");
             motorFrontRight = hardwareMap.get(DcMotor.class, "motorFrontRight");
@@ -312,22 +307,21 @@ public class SAMPLEptpov extends LinearOpMode {
         if (servos) {
 
         }
-        if (push){
+        if (push){//init push sensor
             digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
         }
-        if (color_sensor) {
+        if (colors) {//init all color things
             sensor_color = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
         }
-        if (distance_sensor) {
+        if (distance) {//initiates all distance data
             distance1 = hardwareMap.get(DistanceSensor.class, "distance_1");
         }
     }
-
     //will initiate based on variables and assign variables
     public void init_controls(boolean color_sensor, boolean first,
                               boolean camera, boolean distance, boolean sound, boolean rumble,
                               boolean LED, boolean encoder, boolean imu, boolean controls) {
-        showFeedback(true);
+        showFeedback();//gives feedback on telemetry
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
         if (rumble) {
@@ -341,7 +335,7 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Distance Sensor", "Running");
         }
         if (first) {
-            init_all(true, false, color_sensor, distance);
+            init_all(true, false);
             if (camera) {
                 telemetry.addData("Camera", "Running");
                 initVuforia();
@@ -359,11 +353,6 @@ public class SAMPLEptpov extends LinearOpMode {
             //colorSensorLight(light);
             init_colorSensor();
             telemetry.addData("Color Sensor", "Running");
-        }
-        if (!auto) {
-            telemetry.addData("The Force", "Is With You Driver");
-        } else {
-            telemetry.addData("Hope", "Auto Works");
         }
         telemetry.addData("Systems", "Running");
         if (controls) {
@@ -405,7 +394,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
     //telemetry additions
-    public void showFeedback(boolean color_sensor){
+    public void showFeedback(){
         if (gamepad1.left_stick_y<0){
             direction_FW="forward";
         }if (gamepad1.left_stick_y>0){
@@ -433,7 +422,7 @@ public class SAMPLEptpov extends LinearOpMode {
             slowModeON="False";
         }
         //direction heading
-        if (imu){
+        if (imuInit){
             headingVal=angles.firstAngle;
             telemetry.addData("Heading","%.1f", angles.firstAngle);
             telemetry.addData("Heading Direction",direction_ANGLE);
@@ -480,7 +469,7 @@ public class SAMPLEptpov extends LinearOpMode {
                     .addData("Alpha", "%.3f", colors.alpha);
             get_color_name(colors.red, colors.green, colors.blue);
             telemetry.addLine()
-                    .addData("Color", name)
+                    .addData("Color", colorName)
                     .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");
         }
         teleSpace();
@@ -505,7 +494,7 @@ public class SAMPLEptpov extends LinearOpMode {
         angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         gravity  = imu.getGravity();
     }
-    //endgame effects//dont really work well
+    //endgame effects
     public void endGame(boolean flash){
         gamepad1.runRumbleEffect(customRumbleEffect1);
         gamepad2.runRumbleEffect(customRumbleEffect1);
@@ -654,16 +643,16 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     public void get_color_name(float red,float green,float blue){
         if ((red<=1) && (red >=0.9375)&& (green<=1)&&(green>=0.8671875) && (blue<=1)&&(blue>=0.67578125)){
-            name="white";
+            colorName="white";
         }
         if ((red<=0.5) && (red >=0)&& (green<=1)&&(green>=0.59765625) && (blue<=1)&&(blue>=0.44921875)){
-            name="blue";
+            colorName="blue";
         }
         if ((red<=0.5) && (red >=0)&& (green<=0.5)&&(green>=0) && (blue<=0.5)&&(blue>=0)){
-            name="black";
+            colorName="black";
         }
         if ((red<=1) && (red >=0.3984375)&& (green<=0.234375)&&(green>=0) && (blue<=0.5)&&(blue>=0)){
-            name="red";
+            colorName="red";
         }
         getColorRGB(red,green,blue);
     }
