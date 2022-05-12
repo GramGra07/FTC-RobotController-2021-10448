@@ -42,6 +42,14 @@ import java.util.Locale;
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot = new HardwarePushbot();   // Use a Pushbot's hardware
+    //init vars (used in initiation process)
+    public boolean colors=false;//tells to init
+    public boolean camera=false;//tells to init
+    public boolean distance=false;//tells to init
+    public boolean sound=false;//tells to init
+    public boolean imuInit=true;//tells to init
+    public boolean LED=false;//tells to init
+    public boolean push=false;//tells to init
 //motors
     public DcMotor motorFrontLeft = null;
     public DcMotor motorBackLeft = null;
@@ -128,14 +136,6 @@ public class SAMPLEptpov extends LinearOpMode {
     public String pushSensorCheck;//shows value from push sensor
     public double headingVal=0;//heading in degrees
     public double directionPower=0;//power in specified direction
-//init vars (used in initiation process)
-    public boolean colors=false;//tells to init
-    public boolean camera=false;//tells to init
-    public boolean distance=false;//tells to init
-    public boolean sound=false;//tells to init
-    public boolean imuInit=true;//tells to init
-    public boolean LED=false;//tells to init
-    public boolean push=false;//tells to init
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -152,8 +152,7 @@ public class SAMPLEptpov extends LinearOpMode {
                 });
             }
         }
-        init_controls(colors, true, camera,
-                distance, sound, true, LED, false, imuInit, true);//initiates everything
+        init_controls(true,true,false,true);//initiates everything
         if (camera){
             if (tfod != null) {
                 tfod.activate();
@@ -179,8 +178,7 @@ public class SAMPLEptpov extends LinearOpMode {
             composeTelemetry();
         }
         while (opModeIsActive()) {
-            init_controls(colors, false, camera,
-                    distance, sound, true, LED, false, imuInit, false);//only imu if first init//initiates everything
+            init_controls(false,true,false,true);//only imu if first init//initiates everything
             double y = gamepad1.left_stick_y; // Remember, this is reversed!//forward backward
             double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing//left right
             double rx = -gamepad1.right_stick_x;//turning
@@ -286,19 +284,15 @@ public class SAMPLEptpov extends LinearOpMode {
     }
 //IMPORTANT INIT
     //will initiate all and give names of objects
-    public void init_all(boolean motors, boolean servos) {
+    public void init_all() {
         robot.init(hardwareMap);
-        if (motors) {//init all motors
-            motorFrontLeft = hardwareMap.get(DcMotor.class, "motorFrontLeft");
-            motorBackLeft = hardwareMap.get(DcMotor.class, "motorBackLeft");
-            motorFrontRight = hardwareMap.get(DcMotor.class, "motorFrontRight");
-            motorBackRight = hardwareMap.get(DcMotor.class, "motorBackRight");
-            motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-            motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        }
-        if (servos) {
-
-        }
+        //init all motors
+        motorFrontLeft = hardwareMap.get(DcMotor.class, "motorFrontLeft");
+        motorBackLeft = hardwareMap.get(DcMotor.class, "motorBackLeft");
+        motorFrontRight = hardwareMap.get(DcMotor.class, "motorFrontRight");
+        motorBackRight = hardwareMap.get(DcMotor.class, "motorBackRight");
+        motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
         if (push){//init push sensor
             digitalTouch = hardwareMap.get(DigitalChannel.class, "digital_touch");
         }
@@ -310,9 +304,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
     }
     //will initiate based on variables and assign variables
-    public void init_controls(boolean color_sensor, boolean first,
-                              boolean camera, boolean distance, boolean sound, boolean rumble,
-                              boolean LED, boolean encoder, boolean imu, boolean controls) {
+    public void init_controls(boolean first, boolean rumble, boolean encoder, boolean controls) {
         showFeedback();//gives feedback on telemetry
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
@@ -327,7 +319,7 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Distance Sensor", "Running");
         }
         if (first) {//only on first initiation
-            init_all(true, true);
+            init_all();
             if (camera) {
                 telemetry.addData("Camera", "Running");
                 initVuforia();
@@ -337,11 +329,11 @@ public class SAMPLEptpov extends LinearOpMode {
                 resetEncoder();
                 telemetry.addData("Encoders", "Running");
             }
-            if (imu){
+            if (imuInit){
                 imu();
             }
         }
-        if (color_sensor) {
+        if (colors) {
             init_colorSensor();
             telemetry.addData("Color Sensor", "Running");
         }
@@ -712,6 +704,7 @@ public class SAMPLEptpov extends LinearOpMode {
     //range
     //gets the values and finds if it is in a range of max to min
     public void inRange(boolean heading,int maxH,int minH,boolean sensor,int sensor_number,int maxD,int minD,String unit){
+        resetRanges();
         if (heading){
             if (angles.firstAngle>=minH && angles.firstAngle<=maxH){
                 updatedHeadingInRange=true;
@@ -755,7 +748,7 @@ public class SAMPLEptpov extends LinearOpMode {
         inRange=false;
     }
     //resets range
-    public void resetRange(){
+    public void resetRanges(){
         updated_inRange= false;
         inRange=false;
     }
