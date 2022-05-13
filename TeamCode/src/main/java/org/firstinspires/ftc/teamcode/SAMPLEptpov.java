@@ -42,14 +42,6 @@ import java.util.Locale;
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot = new HardwarePushbot();   // Use a Pushbot's hardware
-    //init vars (used in initiation process)
-    public boolean colors=false;//tells to init
-    public boolean camera=false;//tells to init
-    public boolean distance=false;//tells to init
-    public boolean sound=false;//tells to init
-    public boolean imuInit=true;//tells to init
-    public boolean LED=false;//tells to init
-    public boolean push=false;//tells to init
 //motors
     public DcMotor motorFrontLeft = null;
     public DcMotor motorBackLeft = null;
@@ -127,7 +119,7 @@ public class SAMPLEptpov extends LinearOpMode {
     static final double WHEEL_DIAMETER_INCHES = 4.6950;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);//to get the counts per inch
-//telemetry
+    //telemetry
     public String direction_FW;//string of direction
     public String direction_LR;//string of direction
     public String direction_TLR;//string of direction
@@ -136,6 +128,20 @@ public class SAMPLEptpov extends LinearOpMode {
     public String pushSensorCheck;//shows value from push sensor
     public double headingVal=0;//heading in degrees
     public double directionPower=0;//power in specified direction
+//  ▐▓█▀▀▀▀▀▀▀▀▀█▓▌░▄▄▄▄▄░
+//  ▐▓█░░▀░░▀▄░░█▓▌░█▄▄▄█░
+//  ▐▓█░░▄░░▄▀░░█▓▌░█▄▄▄█░
+//  ▐▓█▄▄▄▄▄▄▄▄▄█▓▌░█████░
+//  ░░░░▄▄███▄▄░░░░░█████░
+// init vars (used in initiation process)
+    public boolean colors=false;//tells to init
+    public boolean camera=false;//tells to init
+    public boolean distance=false;//tells to init
+    public boolean sound=false;//tells to init
+    public boolean imuInit=true;//tells to init
+    public boolean LED=false;//tells to init
+    public boolean push=false;//tells to init
+    public boolean picture=false;
     @Override
     public void runOpMode() {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -255,6 +261,9 @@ public class SAMPLEptpov extends LinearOpMode {
                 telemetry.addData("Sound >", sounds[soundIndex]);
                 telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
             }
+            if (picture) {
+                picInTele(0);
+            }
             telemetry.update();
         }
     }
@@ -263,7 +272,7 @@ public class SAMPLEptpov extends LinearOpMode {
         position = degree_mult * degrees;
         return position;
     }
-    public void dance(String direction_1) {//-1=back//1=forward
+    public void dance(String direction_1) {//-1=back//1=forward//fun little thing we learned from others
         directionPower=1;
         if (direction_1.equals("backwards")) {
             motorFrontLeft.setPower(directionPower);
@@ -318,14 +327,15 @@ public class SAMPLEptpov extends LinearOpMode {
         if (distance) {
             telemetry.addData("Distance Sensor", "Running");
         }
-        if (first) {//only on first initiation
+        //only on first initiation
+        if (first) {
             init_all();
-            if (camera) {
+            if (camera) {//only on first init and if the camera variable is true
                 telemetry.addData("Camera", "Running");
                 initVuforia();
                 initTfod();
             }
-            if (encoder) {
+            if (encoder) {//only on first init and if the encoder variable is true
                 resetEncoder();
                 telemetry.addData("Encoders", "Running");
             }
@@ -333,7 +343,7 @@ public class SAMPLEptpov extends LinearOpMode {
                 imu();
             }
         }
-        if (colors) {
+        if (colors) {//will init the color sensor values
             init_colorSensor();
             telemetry.addData("Color Sensor", "Running");
         }
@@ -393,7 +403,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         //direction heading
         if (imuInit){
-            headingVal=angles.firstAngle;
+            headingVal=angles.firstAngle;//sets angle to var to check
             telemetry.addData("Heading","%.1f", angles.firstAngle);
             telemetry.addData("Heading Direction",direction_ANGLE);
             if (headingVal>45 && headingVal<135){
@@ -817,4 +827,216 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addStep(0.0, 0.0, 250)  //  Pause for 300 mSec
                 .build();
     }
+    //put cool thing in telemetry
+    public void picInTele(int choice){
+        if (choice==0){
+            teleSpace();
+        }
+        if (choice==1){
+            telemetry.addLine().addData("▐▓█▀▀▀▀▀▀▀▀▀█▓▌░▄▄▄▄▄░                      ","");
+            telemetry.addLine().addData("▐▓█░░▀░░▀▄░░█▓▌░█▄▄▄█░                      ","");
+            telemetry.addLine().addData("▐▓█░░▄░░▄▀░░█▓▌░█▄▄▄█░                      ","");
+            telemetry.addLine().addData("▐▓█▄▄▄▄▄▄▄▄▄█▓▌░█████░                      ","");
+            telemetry.addLine().addData("░░░░▄▄███▄▄░░░░░█████░                      ","");
+        }
+        if (choice==2){
+            telemetry.addLine().addData("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$                      ","");
+            telemetry.addLine().addData("$$$$$$$$$$$$$$$$$$$$$$$$_____$$$$                      ","");
+            telemetry.addLine().addData("$$$$_____$$$$$$$$$$$$$$$_____$$$$                      ","");
+            telemetry.addLine().addData("$$$$_____$$$$$$$$$$$$$$$_____$$$$                      ","");
+            telemetry.addLine().addData("$$$$_____$$____$$$____$$_____$$$$                      ","");
+            telemetry.addLine().addData("$$$$_____$______$______$_____$$$$                      ","");
+            telemetry.addLine().addData("$$$$_____$______$______$_____$$$$                      ","");
+            telemetry.addLine().addData("$$$$_____$____$$$$$$$$$$$$$$$$$$$                      ","");
+            telemetry.addLine().addData("$$$$_____$___$$___________$$$$$$$                      ","");
+            telemetry.addLine().addData("$$$$_____$__$$_______________$$$$                      ","");
+            telemetry.addLine().addData("$$$$__________$$_____________$$$$                      ","");
+            telemetry.addLine().addData("$$$$___________$$___________$$$$$                      ","");
+            telemetry.addLine().addData("$$$$_____________$_________$$$$$$                      ","");
+            telemetry.addLine().addData("$$$$$_____________________$$$$$$$                      ","");
+            telemetry.addLine().addData("$$$$$$___________________$$$$$$$$                      ","");
+            telemetry.addLine().addData("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$                      ","");
+        }
+        if (choice==3){
+            telemetry.addLine().addData("─▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄                       ","");
+            telemetry.addLine().addData("█░░░█░░░░░░░░░░▄▄░██░█                      ","");
+            telemetry.addLine().addData("█░▀▀█▀▀░▄▀░▄▀░░▀▀░▄▄░█                      ","");
+            telemetry.addLine().addData("█░░░▀░░░▄▄▄▄▄░░██░▀▀░█                      ","");
+            telemetry.addLine().addData("─▀▄▄▄▄▄▀─────▀▄▄▄▄▄▄▀                       ","");
+        }
+        if (choice==4){
+            telemetry.addLine().addData("──▄────▄▄▄▄▄▄▄────▄───                      ","");
+            telemetry.addLine().addData("─▀▀▄─▄█████████▄─▄▀▀──                      ","");
+            telemetry.addLine().addData("─────██─▀███▀─██──────                      ","");
+            telemetry.addLine().addData("───▄─▀████▀████▀─▄────                      ","");
+            telemetry.addLine().addData("─▀█────██▀█▀██────█▀──                      ","");
+        }
+        if (choice==5){
+            telemetry.addLine().addData("───▄█▌─▄─▄─▐█▄───                         ","");
+            telemetry.addLine().addData("───██▌▀▀▄▀▀▐██───                         ","");
+            telemetry.addLine().addData("───██▌─▄▄▄─▐██───                         ","");
+            telemetry.addLine().addData("───▀██▌▐█▌▐██▀───                         ","");
+            telemetry.addLine().addData("▄██████─▀─██████▄                         ","");
+        }
+        if (choice==6){
+            telemetry.addLine().addData("░░░░░░░▄█▄▄▄█▄░░░░░░░                      ","");
+            telemetry.addLine().addData("▄▀░░░░▄▌─▄─▄─▐▄░░░░▀▄                      ","");
+            telemetry.addLine().addData("█▄▄█░░▀▌─▀─▀─▐▀░░█▄▄█                      ","");
+            telemetry.addLine().addData("░▐▌░░░░▀▀███▀▀░░░░▐▌░                      ","");
+            telemetry.addLine().addData("████░▄█████████▄░████                      ","");
+        }
+        if (choice==7){
+            telemetry.addLine().addData("╭━┳━╭━╭━╮╮                             ","");
+            telemetry.addLine().addData("┃┈┈┈┣▅╋▅┫┃                            ","");
+            telemetry.addLine().addData("┃┈┃┈╰━╰━━━━━━╮                        ","");
+            telemetry.addLine().addData("╰┳╯┈┈┈┈┈┈┈┈┈◢▉◣                      ","");
+            telemetry.addLine().addData("╲┃┈┈┈┈┈┈┈┈┈┈▉▉▉                       ","");
+            telemetry.addLine().addData("╲┃┈┈┈┈┈┈┈┈┈┈◥▉◤                      ","");
+            telemetry.addLine().addData("╲┃┈┈┈┈╭━┳━━━━╯                        ","");
+            telemetry.addLine().addData("╲┣━━━━━━┫                             ","");
+        }
+        if (choice==8){
+            telemetry.addLine().addData("______________$$$$$$$                                           ","");
+            telemetry.addLine().addData("_____________$$$$$$$$$                                          ","");
+            telemetry.addLine().addData("____________$$$$$$$$$$$                                         ","");
+            telemetry.addLine().addData("____________$$$$$$$$$$$                                         ","");
+            telemetry.addLine().addData("____________$$$$$$$$$$$                                         ","");
+            telemetry.addLine().addData("_____________$$$$$$$$$                                          ","");
+            telemetry.addLine().addData("_____$$$$$$_____$$$$$$$$$$                                      ","");
+            telemetry.addLine().addData("____$$$$$$$$__$$$$$$_____$$$                                    ","");
+            telemetry.addLine().addData("___$$$$$$$$$$$$$$$$_________$                                   ","");
+            telemetry.addLine().addData("___$$$$$$$$$$$$$$$$______$__$                                   ","");
+            telemetry.addLine().addData("___$$$$$$$$$$$$$$$$_____$$$_$                                   ","");
+            telemetry.addLine().addData("___$$$$$$$$$$$__________$$$_$_____$$                            ","");
+            telemetry.addLine().addData("____$$$$$$$$$____________$$_$$$$_$$$$                           ","");
+            telemetry.addLine().addData("______$$$__$$__$$$______________$$$$                            ","");
+            telemetry.addLine().addData("___________$$____$_______________$                              ","");
+            telemetry.addLine().addData("____________$$____$______________$                              ","");
+            telemetry.addLine().addData("_____________$$___$$$__________$$                               ","");
+            telemetry.addLine().addData("_______________$$$_$$$$$$_$$$$$                                 ","");
+            telemetry.addLine().addData("________________$$____$$_$$$$$                                  ","");
+            telemetry.addLine().addData("_______________$$$$$___$$$$$$$$$$                               ","");
+            telemetry.addLine().addData("_______________$$$$$$$$$$$$$$$$$$$$                             ","");
+            telemetry.addLine().addData("_______________$$_$$$$$$$$$$$$$$__$$                            ","");
+            telemetry.addLine().addData("_______________$$__$$$$$$$$$$$___$_$                            ","");
+            telemetry.addLine().addData("______________$$$__$___$$$______$$$$                            ","");
+            telemetry.addLine().addData("______________$$$_$__________$$_$$$$                            ","");
+            telemetry.addLine().addData("______________$$$$$_________$$$$_$_$                            ","");
+            telemetry.addLine().addData("_______________$$$$__________$$$__$$                            ","");
+            telemetry.addLine().addData("_____$$$$_________$________________$                            ","");
+            telemetry.addLine().addData("___$$$___$$______$$$_____________$$                             ","");
+            telemetry.addLine().addData("__$___$$__$$_____$__$$$_____$$__$$                              ","");
+            telemetry.addLine().addData("_$$____$___$_______$$$$$$$$$$$$$                                ","");
+            telemetry.addLine().addData("_$$_____$___$_____$$$$$_$$___$$$                                ","");
+            telemetry.addLine().addData("_$$_____$___$___$$$$____$____$$                                 ","");
+            telemetry.addLine().addData("__$_____$$__$$$$$$$____$$_$$$$$                                 ","");
+            telemetry.addLine().addData("__$$_____$___$_$$_____$__$__$$$$$$$$$$$$                        ","");
+            telemetry.addLine().addData("___$_____$$__$_$_____$_$$$__$$__$______$$$                      ","");
+            telemetry.addLine().addData("____$$_________$___$$_$___$$__$$_________$                      ","");
+            telemetry.addLine().addData("_____$$_$$$$___$__$$__$__________________$                      ","");
+            telemetry.addLine().addData("______$$____$__$$$____$__________________$                      ","");
+            telemetry.addLine().addData("_______$____$__$_______$$______________$$                       ","");
+            telemetry.addLine().addData("_______$$$$_$$$_________$$$$$$$__$$$$$$                         ","");
+            telemetry.addLine().addData("__________$$$_________________$$$$$                             ","");
+        }
+    }
+    //5lines
+//  ▐▓█▀▀▀▀▀▀▀▀▀█▓▌░▄▄▄▄▄░
+//  ▐▓█░░▀░░▀▄░░█▓▌░█▄▄▄█░
+//  ▐▓█░░▄░░▄▀░░█▓▌░█▄▄▄█░
+//  ▐▓█▄▄▄▄▄▄▄▄▄█▓▌░█████░
+//  ░░░░▄▄███▄▄░░░░░█████░
+    //16lines
+//  $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//  $$$$$$$$$$$$$$$$$$$$$$$$_____$$$$
+//  $$$$_____$$$$$$$$$$$$$$$_____$$$$
+//  $$$$_____$$$$$$$$$$$$$$$_____$$$$
+//  $$$$_____$$____$$$____$$_____$$$$
+//  $$$$_____$______$______$_____$$$$
+//  $$$$_____$______$______$_____$$$$
+//  $$$$_____$____$$$$$$$$$$$$$$$$$$$
+//  $$$$_____$___$$___________$$$$$$$
+//  $$$$_____$__$$_______________$$$$
+//  $$$$__________$$_____________$$$$
+//  $$$$___________$$___________$$$$$
+//  $$$$_____________$_________$$$$$$
+//  $$$$$_____________________$$$$$$$
+//  $$$$$$___________________$$$$$$$$
+//  $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    //5lines
+//  ─▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄
+//  █░░░█░░░░░░░░░░▄▄░██░█
+//  █░▀▀█▀▀░▄▀░▄▀░░▀▀░▄▄░█
+//  █░░░▀░░░▄▄▄▄▄░░██░▀▀░█
+//  ─▀▄▄▄▄▄▀─────▀▄▄▄▄▄▄▀
+    //5lines
+//  ──▄────▄▄▄▄▄▄▄────▄───
+//  ─▀▀▄─▄█████████▄─▄▀▀──
+//  ─────██─▀███▀─██──────
+//  ───▄─▀████▀████▀─▄────
+//  ─▀█────██▀█▀██────█▀──
+    //5lines
+//  ───▄█▌─▄─▄─▐█▄
+//  ───██▌▀▀▄▀▀▐██
+//  ───██▌─▄▄▄─▐██
+//  ───▀██▌▐█▌▐██▀
+//  ▄██████─▀─██████▄
+    //5lines
+//  ░░░░░░░▄█▄▄▄█▄░░░░░░░
+//  ▄▀░░░░▄▌─▄─▄─▐▄░░░░▀▄
+//  █▄▄█░░▀▌─▀─▀─▐▀░░█▄▄█
+//  ░▐▌░░░░▀▀███▀▀░░░░▐▌░
+//  ████░▄█████████▄░████
+    //8lines
+//  ╭━┳━╭━╭━╮╮
+//  ┃┈┈┈┣▅╋▅┫┃
+//  ┃┈┃┈╰━╰━━━━━━╮
+//  ╰┳╯┈┈┈┈┈┈┈┈┈◢▉◣
+//  ╲┃┈┈┈┈┈┈┈┈┈▉▉▉
+//  ╲┃┈┈┈┈┈┈┈┈┈◥▉◤
+//  ╲┃┈┈┈┈╭━┳━━━━╯
+//  ╲┣━━━━━━┫
+    //42lines
+//  ______________$$$$$$$
+//  _____________$$$$$$$$$
+//  ____________$$$$$$$$$$$
+//  ____________$$$$$$$$$$$
+//  ____________$$$$$$$$$$$
+//  _____________$$$$$$$$$
+//  _____$$$$$$_____$$$$$$$$$$
+//  ____$$$$$$$$__$$$$$$_____$$$
+//  ___$$$$$$$$$$$$$$$$_________$
+//  ___$$$$$$$$$$$$$$$$______$__$
+//  ___$$$$$$$$$$$$$$$$_____$$$_$
+//  ___$$$$$$$$$$$__________$$$_$_____$$
+//  ____$$$$$$$$$____________$$_$$$$_$$$$
+//  ______$$$__$$__$$$______________$$$$
+//  ___________$$____$_______________$
+//  ____________$$____$______________$
+//  _____________$$___$$$__________$$
+//  _______________$$$_$$$$$$_$$$$$
+//  ________________$$____$$_$$$$$
+//  _______________$$$$$___$$$$$$$$$$
+//  _______________$$$$$$$$$$$$$$$$$$$$
+//  _______________$$_$$$$$$$$$$$$$$__$$
+//  _______________$$__$$$$$$$$$$$___$_$
+//  ______________$$$__$___$$$______$$$$
+//  ______________$$$_$__________$$_$$$$
+//  ______________$$$$$_________$$$$_$_$
+//  _______________$$$$__________$$$__$$
+//  _____$$$$_________$________________$
+//  ___$$$___$$______$$$_____________$$
+//  __$___$$__$$_____$__$$$_____$$__$$
+//  _$$____$___$_______$$$$$$$$$$$$$
+//  _$$_____$___$_____$$$$$_$$___$$$
+//  _$$_____$___$___$$$$____$____$$
+//  __$_____$$__$$$$$$$____$$_$$$$$
+//  __$$_____$___$_$$_____$__$__$$$$$$$$$$$$
+//  ___$_____$$__$_$_____$_$$$__$$__$______$$$
+//  ____$$_________$___$$_$___$$__$$_________$
+//  _____$$_$$$$___$__$$__$__________________$
+//  ______$$____$__$$$____$__________________$
+//  _______$____$__$_______$$______________$$
+//  _______$$$$_$$$_________$$$$$$$__$$$$$$
+//  __________$$$_________________$$$$$
 }
