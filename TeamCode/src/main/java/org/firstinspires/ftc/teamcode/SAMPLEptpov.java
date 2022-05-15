@@ -713,58 +713,57 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //range
     //gets the values and finds if it is in a range of max to min
-    public void inRange(boolean heading,int maxH,int minH,boolean sensor,int sensor_number,int maxD,int minD,String unit){
+    public boolean checkDistance(int sensor_number,int maxD,int minD,String unit){
         resetRanges();
-        if (heading){
-            if (angles.firstAngle>=minH && angles.firstAngle<=maxH){
-                updatedHeadingInRange=true;
-            }else{
-                updatedHeadingInRange=false;
-            }
-        }
-        if (sensor){
-            if (sensor_number==1){
-                getDistance1(false);
-                if (unit.equals("cm")){
-                    if (CM_distance1>=minD && CM_distance1<=maxD){
-                        inRange=true;
-                    }
-                }
-                else if (unit.equals("mm")){
-                    if (MM_distance1>=minD && MM_distance1<=maxD){
-                        inRange=true;
-                    }
-                }
-                else if (unit.equals("in")){
-                    if (IN_distance1>=minD && IN_distance1<=maxD){
-                        inRange=true;
-                    }
-                }
-                else if (unit.equals("m")){
-                    if (M_distance1>=minD && M_distance1<=maxD){
-                        inRange=true;
-                    }
-                }
-                else{
-                    inRange=false;
+        if (sensor_number==1){
+            getDistance1(false);
+            if (unit.equals("cm")){
+                if (CM_distance1>=minD && CM_distance1<=maxD){
+                    inRange=true;
                 }
             }
+            else if (unit.equals("mm")){
+                if (MM_distance1>=minD && MM_distance1<=maxD){
+                    inRange=true;
+                }
+            }
+            else if (unit.equals("in")){
+                if (IN_distance1>=minD && IN_distance1<=maxD){
+                    inRange=true;
+                }
+            }
+            else if (unit.equals("m")){
+                if (M_distance1>=minD && M_distance1<=maxD){
+                    inRange=true;
+                }
+            }
+            else{
+                inRange=false;
+            }
         }
-        updateRangeTo(inRange);
+        if (inRange){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
-    //update range
-    public void updateRangeTo(boolean condition){
-        updated_inRange= condition;
-        inRange=false;
+    public boolean checkHeading(int maxH, int minH){
+        resetRanges();
+        if (angles.firstAngle>=minH && angles.firstAngle<=maxH){
+            updatedHeadingInRange=true;
+        }else{
+            updatedHeadingInRange=false;
+        }
+        if (updatedHeadingInRange){
+            return true;
+        }
+        return false;
     }
     //resets range
     public void resetRanges(){
         updated_inRange= false;
         inRange=false;
-    }
-    //resets the heading
-    public void resetHeading(){
-        updatedHeadingInRange= false;
     }
 //encoder driving
     public void encoderDrive(double speed,
@@ -939,6 +938,13 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addLine().addData("_______$$$$_$$$_________$$$$$$$__$$$$$$                         ","");
             telemetry.addLine().addData("__________$$$_________________$$$$$                             ","");
         }
+        if (choice==9){
+            telemetry.addLine().addData("╔═╦═╗    ╔╗ ╔═══╗                      ","");
+            telemetry.addLine().addData("║║║║╠═╗╔═╣╚╗║╔══╝                      ","");
+            telemetry.addLine().addData("║║║║║╬╚╣═╣║║║╚══╗                      ","");
+            telemetry.addLine().addData("╚╩═╩╩══╩═╩╩╝╚══╗║                      ","");
+            telemetry.addLine().addData("            ╔══╝║                      ","");
+        }
     }
     //5lines
 //  ▐▓█▀▀▀▀▀▀▀▀▀█▓▌░▄▄▄▄▄░
@@ -1039,4 +1045,10 @@ public class SAMPLEptpov extends LinearOpMode {
 //  _______$____$__$_______$$______________$$
 //  _______$$$$_$$$_________$$$$$$$__$$$$$$
 //  __________$$$_________________$$$$$
+    //5lines
+//  ╔═╦═╗████╔╗█╔═══╗
+//  ║║║║╠═╗╔═╣╚╗║╔══╝
+//  ║║║║║╬╚╣═╣║║║╚══╗
+//  ╚╩═╩╩══╩═╩╩╝╚══╗║
+//  ████████████╔══╝║
 }
