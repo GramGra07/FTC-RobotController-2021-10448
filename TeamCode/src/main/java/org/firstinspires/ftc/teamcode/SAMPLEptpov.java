@@ -37,6 +37,12 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 import java.util.List;
 import java.util.Locale;
+import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
+import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 //import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 @TeleOp(name="SamplePTPOV", group="Pushbot")
 //@Disabled
@@ -44,7 +50,7 @@ public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot = new HardwarePushbot();   // Use a Pushbot's hardware
 //motors
     public DcMotor motorFrontLeft = null;
-    public DcMotor motorBackLeft = null;//test v3
+    public DcMotor motorBackLeft = null;
     public DcMotor motorFrontRight = null;
     public DcMotor motorBackRight = null;
 //servo
@@ -86,6 +92,9 @@ public class SAMPLEptpov extends LinearOpMode {
             "AXmzBcj/////AAABme5HSJ/H3Ucup73WSIaV87tx/sFHYaWfor9OZVg6afr2Bw7kNolHd+mF5Ps91SlQpgBHulieI0jcd86kqJSwx46BZ8v8DS5S5x//eQWMEGjMDnvco4/oTcDwuSOLIVZG2UtLmJXPS1L3CipjabePFlqAL2JtBlN78p6ZZbRFSHW680hWEMSimZuQy/cMudD7J/MjMjMs7b925b8BkijlnTQYr7CbSlXrpDh5K+9fLlk2OyEZ4w7tm7e4UJDInJ/T3oi8PqqKCqkUaTkJWlQsvoELbDu5L2FgzsuDhBLe2rHtJRqfORd7n+6M30UdFSsxqq5TaZztkWgzRUr1GC3yBSTS6iFqEuL3g06GrfwOJF0F";
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
+    //mark vuforia
+    public static final String TAG = "Vuforia VuMark Sample";
+    OpenGLMatrix lastLocation = null;
     //colorSensor
     final float[] hsvValues = new float[3];//gets values for color sensor
     //color
@@ -109,7 +118,7 @@ public class SAMPLEptpov extends LinearOpMode {
     Gamepad.RumbleEffect customRumbleEffect3;//custom rumble
     final double End_Game = 75.0;              // Wait this many seconds before rumble-alert for half-time.
     //sounds
-    String sounds[] = {"ss_alarm", "ss_bb8_down", "ss_bb8_up", "ss_darth_vader", "ss_fly_by",
+    String[] sounds = {"ss_alarm", "ss_bb8_down", "ss_bb8_up", "ss_darth_vader", "ss_fly_by",
             "ss_mf_fail", "ss_laser", "ss_laser_burst", "ss_light_saber", "ss_light_saber_long", "ss_light_saber_short",
             "ss_light_speed", "ss_mine", "ss_power_up", "ss_r2d2_up", "ss_roger_roger", "ss_siren", "ss_wookie"};
     boolean soundPlaying = false; //finds if the sound is actually playing
@@ -127,6 +136,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public String direction_ANGLE;//string of angle
     public String pushSensorCheck;//shows value from push sensor
     public double headingVal=0;//heading in degrees
+    public double alteredHeading=0;
     public double directionPower=0;//power in specified direction
 //  ▐▓█▀▀▀▀▀▀▀▀▀█▓▌░▄▄▄▄▄░
 //  ▐▓█░░▀░░▀▄░░█▓▌░█▄▄▄█░
@@ -135,17 +145,19 @@ public class SAMPLEptpov extends LinearOpMode {
 //  ░░░░▄▄███▄▄░░░░░█████░
 // init vars (used in initiation process)
     public boolean colors=false;//tells to init
-    public boolean camera=false;//tells to init
+    public boolean camera=true;//tells to init
     public boolean distance=false;//tells to init
-    public boolean sound=false;//tells to init
+    public boolean sound=true;//tells to init
     public boolean imuInit=true;//tells to init
     public boolean LED=false;//tells to init
     public boolean push=false;//tells to init
-    public boolean picture=false;
+    public boolean picture=true;
     @Override
     public void runOpMode() {
-        int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
-        relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
+        if (colors) {
+            int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
+            relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
+        }
         //relative layout is the background on the RC phone which can be used to test color sensors
         if (colors){//if colors is being used
             try {
@@ -159,13 +171,23 @@ public class SAMPLEptpov extends LinearOpMode {
             }
         }
         init_controls(true,true,false,true);//initiates everything
-        if (camera){
-            if (tfod != null) {
-                tfod.activate();
-                tfod.setZoom(1, 16.0 / 9.0);
-            }
+        if (tfod != null) {
+            if (camera){
+                    tfod.activate();
+                    tfod.setZoom(1, 16.0 / 9.0);
+                }
         }
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        parameters.vuforiaLicenseKey = "AXmzBcj/////AAABme5HSJ/H3Ucup73WSIaV87tx/sFHYaWfor9OZVg6afr2Bw7kNolHd+mF5Ps91SlQpgBHulieI0jcd86kqJSwx46BZ8v8DS5S5x//eQWMEGjMDnvco4/oTcDwuSOLIVZG2UtLmJXPS1L3CipjabePFlqAL2JtBlN78p6ZZbRFSHW680hWEMSimZuQy/cMudD7J/MjMjMs7b925b8BkijlnTQYr7CbSlXrpDh5K+9fLlk2OyEZ4w7tm7e4UJDInJ/T3oi8PqqKCqkUaTkJWlQsvoELbDu5L2FgzsuDhBLe2rHtJRqfORd7n+6M30UdFSsxqq5TaZztkWgzRUr1GC3yBSTS6iFqEuL3g06GrfwOJF0F";
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+        VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
+        VuforiaTrackable relicTemplate = relicTrackables.get(0);
+        relicTemplate.setName("relicVuMarkTemplate"); // can help in debugging; otherwise not necessary
+        //distance
         Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) distance1;//helps init distance sensors
+
         //sound
         int soundIndex = 0;//gets value in list of sounds
         int soundID;
@@ -175,7 +197,7 @@ public class SAMPLEptpov extends LinearOpMode {
         params.waitForNonLoopingSoundsToFinish = true;
         boolean was_dpad_up = false;//checks if dpad was pressed
         boolean was_dpad_down = false;//checks if dpad was pressed
-        boolean was_B_down = false;//checks if b was pressed
+        //checks if b was pressed
         //
         ElapsedTime runtime = new ElapsedTime();//runtime helps with endgame initiation and cues
         waitForStart();
@@ -183,6 +205,7 @@ public class SAMPLEptpov extends LinearOpMode {
             imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
             composeTelemetry();
         }
+        relicTrackables.activate();
         while (opModeIsActive()) {
             init_controls(false,true,false,true);//only imu if first init//initiates everything
             double y = gamepad1.left_stick_y; // Remember, this is reversed!//forward backward
@@ -233,7 +256,6 @@ public class SAMPLEptpov extends LinearOpMode {
             }
             was_dpad_up = gamepad1.dpad_up;
             was_dpad_down = gamepad1.dpad_down;
-            was_B_down = gamepad1.b;
             //camera run
             if (camera){//will run vuforia
                 run_vu();
@@ -264,10 +286,33 @@ public class SAMPLEptpov extends LinearOpMode {
             if (picture) {
                 picInTele(0);
             }
+            //vumark
+            if(camera) {
+                RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
+                if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
+                    telemetry.addData("VuMark", "%s visible", vuMark);
+                    OpenGLMatrix pose = ((VuforiaTrackableDefaultListener) relicTemplate.getListener()).getPose();
+                    telemetry.addData("Pose", format(pose));
+                    if (pose != null) {
+                        VectorF trans = pose.getTranslation();
+                        Orientation rot = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+                        double tX = trans.get(0);
+                        double tY = trans.get(1);
+                        double tZ = trans.get(2);
+                        double rX = rot.firstAngle;
+                        double rY = rot.secondAngle;
+                        double rZ = rot.thirdAngle;
+                    }
+                } else {
+                    telemetry.addData("VuMark", "not visible");
+                }
+            }
             telemetry.update();
+
         }
     }
     //setServo//this sets the servo to a position based off a given degree
+    //servo.setPosition(setServo(90))
     public double setServo(int degrees){
         position = degree_mult * degrees;
         return position;
@@ -403,8 +448,8 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         //direction heading
         if (imuInit){
-            headingVal=angles.firstAngle;//sets angle to var to check
-            telemetry.addData("Heading","%.1f", angles.firstAngle);
+            getHeading();
+            telemetry.addData("Heading","%.1f", headingVal);
             telemetry.addData("Heading Direction",direction_ANGLE);
             if (headingVal>45 && headingVal<135){
                 direction_ANGLE="right";
@@ -481,7 +526,7 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //imu telemetry
     void composeTelemetry() {
-
+        getHeading();
         // At the beginning of each telemetry update, grab a bunch of data
         // from the IMU that we will then display in separate lines.
         telemetry.addAction(new Runnable() { @Override public void run()
@@ -508,7 +553,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addLine()
                 .addData("heading", new Func<String>() {
                     @Override public String value() {
-                        return formatAngle(angles.angleUnit, angles.firstAngle);
+                        return formatAngle(angles.angleUnit, headingVal);
                     }
                 })
                 .addData("roll", new Func<String>() {
@@ -542,6 +587,9 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     String formatDegrees(double degrees){
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
+    public void getHeading(){
+        headingVal=angles.firstAngle+alteredHeading;
     }
 //colors
 //colors
@@ -614,6 +662,9 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addData("distance", String.format("%.0001f in",IN_distance1));
     }
 //camera
+    String format(OpenGLMatrix transformationMatrix) {
+        return (transformationMatrix != null) ? transformationMatrix.formatAsTransform() : "null";
+    }
     public void run_vu(){
         if (tfod != null) {//not nothing
             List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
@@ -668,12 +719,12 @@ public class SAMPLEptpov extends LinearOpMode {
         blinkinLedDriver.setPattern(pattern);
         display = telemetry.addData("Display Kind: ", displayKind.toString());
         patternName = telemetry.addData("Pattern: ", pattern.toString());
-        setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind.AUTO);
+        setDisplayKind();
     }
-    protected void setDisplayKind(SampleRevBlinkinLedDriver.DisplayKind displayKind)
+    protected void setDisplayKind()
     {
-        this.displayKind = displayKind;
-        display.setValue(displayKind.toString());
+        this.displayKind = SampleRevBlinkinLedDriver.DisplayKind.AUTO;
+        display.setValue(SampleRevBlinkinLedDriver.DisplayKind.AUTO.toString());
     }
 
     protected void doAutoDisplay()
@@ -713,6 +764,7 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //range
     //gets the values and finds if it is in a range of max to min
+    //if (checkDistance(1,10,1,"cm"))==True{}
     public boolean checkDistance(int sensor_number,int maxD,int minD,String unit){
         resetRanges();
         if (sensor_number==1){
@@ -741,24 +793,14 @@ public class SAMPLEptpov extends LinearOpMode {
                 inRange=false;
             }
         }
-        if (inRange){
-            return true;
-        }
-        else{
-            return false;
-        }
+        return inRange;
     }
+    // if (checkHeading(90,0))==True{}
     public boolean checkHeading(int maxH, int minH){
+        getHeading();
         resetRanges();
-        if (angles.firstAngle>=minH && angles.firstAngle<=maxH){
-            updatedHeadingInRange=true;
-        }else{
-            updatedHeadingInRange=false;
-        }
-        if (updatedHeadingInRange){
-            return true;
-        }
-        return false;
+        updatedHeadingInRange= headingVal >= minH && headingVal <= maxH;
+        return updatedHeadingInRange;
     }
     //resets range
     public void resetRanges(){
@@ -767,8 +809,7 @@ public class SAMPLEptpov extends LinearOpMode {
     }
 //encoder driving
     public void encoderDrive(double speed,
-                             double leftInches, double rightInches,
-                             double timeoutS) {
+                             double leftInches, double rightInches) {
         int newLeftTarget;
         int newRightTarget;
         if (opModeIsActive()) {
