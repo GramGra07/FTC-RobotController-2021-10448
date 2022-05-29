@@ -44,7 +44,7 @@ public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot = new HardwarePushbot();   // Use a Pushbot's hardware
 //motors
     public DcMotor motorFrontLeft = null;
-    public DcMotor motorBackLeft = null;
+    public DcMotor motorBackLeft = null;//test
     public DcMotor motorFrontRight = null;
     public DcMotor motorBackRight = null;
 //servo
