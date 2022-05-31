@@ -152,6 +152,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public boolean LED=false;//tells to init
     public boolean push=false;//tells to init
     public boolean picture=true;
+    public String statusVal="OFFLINE";
     @Override
     public void runOpMode() {
         if (colors) {
@@ -275,17 +276,6 @@ public class SAMPLEptpov extends LinearOpMode {
             motorBackRight.setPower(backRightPower);
             sleep(50);
             teleSpace();//puts a space in telemetry
-            if ( distance){
-                telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));//distance sensor
-                telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));//distance sensor
-            }
-            if(sound){
-                telemetry.addData("Sound >", sounds[soundIndex]);
-                telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
-            }
-            if (picture) {
-                picInTele(0);
-            }
             //vumark
             if(camera) {
                 RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
@@ -307,9 +297,24 @@ public class SAMPLEptpov extends LinearOpMode {
                     telemetry.addData("VuMark", "not visible");
                 }
             }
+            //fun stuff/ usefull but not usefull
+            if ( distance){
+                telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));//distance sensor
+                telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));//distance sensor
+            }
+            if(sound){
+                telemetry.addData("Sound >", sounds[soundIndex]);
+                telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
+            }
+            if (picture) {
+                picInTele(0);
+            }
             telemetry.update();
 
         }
+    }
+    public void updateStatus(String status){
+        statusVal=status;
     }
     //setServo//this sets the servo to a position based off a given degree
     //servo.setPosition(setServo(90))
@@ -318,6 +323,7 @@ public class SAMPLEptpov extends LinearOpMode {
         return position;
     }
     public void dance(String direction_1) {//-1=back//1=forward//fun little thing we learned from others
+        updateStatus("Dancing");
         directionPower=1;
         if (direction_1.equals("backwards")) {
             motorFrontLeft.setPower(directionPower);
@@ -339,6 +345,7 @@ public class SAMPLEptpov extends LinearOpMode {
 //IMPORTANT INIT
     //will initiate all and give names of objects
     public void init_all() {
+        updateStatus("INIT");
         robot.init(hardwareMap);
         //init all motors
         motorFrontLeft = hardwareMap.get(DcMotor.class, "motorFrontLeft");
@@ -359,6 +366,11 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //will initiate based on variables and assign variables
     public void init_controls(boolean first, boolean rumble, boolean encoder, boolean controls) {
+        if (first) {
+            updateStatus("INIT");
+        }else{
+            updateStatus("RUNNING");
+        }
         showFeedback();//gives feedback on telemetry
         telemetry.addData("Hello", "Driver Lookin good today");
         telemetry.addData("Systems", "Should Be Good To Go");
@@ -417,6 +429,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public void showFeedback(){
     //get variables for telemetry
         //gets direction vertical
+        telemetry.addData("Status",statusVal);
         if (gamepad1.left_stick_y<0){
             direction_FW="forward";
         }if (gamepad1.left_stick_y>0){
@@ -454,13 +467,13 @@ public class SAMPLEptpov extends LinearOpMode {
             if (headingVal>45 && headingVal<135){
                 direction_ANGLE="right";
             }
-            if (headingVal<-45 && headingVal<45){
+            if (headingVal>-45 && headingVal<45){
                 direction_ANGLE="forward";
             }
-            if (headingVal>135 && headingVal>-135){
+            if (headingVal<135 && headingVal>-135){
                 direction_ANGLE="backwards";
             }
-            if (headingVal>-45 && headingVal<-135){
+            if (headingVal<-45 && headingVal>-135){
                 direction_ANGLE="left";
             }
         }
