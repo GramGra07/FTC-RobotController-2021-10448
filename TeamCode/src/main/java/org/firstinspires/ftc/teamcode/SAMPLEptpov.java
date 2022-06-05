@@ -144,6 +144,8 @@ public class SAMPLEptpov extends LinearOpMode {
 //  ▐▓█▄▄▄▄▄▄▄▄▄█▓▌░█████░
 //  ░░░░▄▄███▄▄░░░░░█████░
 // init vars (used in initiation process)
+    public double counter=0;//counts initiations//prevents telemetry clogging
+    public double extra_counter=0;//counts initiations
     public boolean colors=false;//tells to init
     public boolean camera=true;//tells to init
     public boolean distance=false;//tells to init
@@ -372,46 +374,47 @@ public class SAMPLEptpov extends LinearOpMode {
             updateStatus("RUNNING");
         }
         showFeedback();//gives feedback on telemetry
-        telemetry.addData("Hello", "Driver Lookin good today");
-        telemetry.addData("Systems", "Should Be Good To Go");
+        counter+=1;
         if (rumble) {//gamepad rumble
             init_rumble();
-            telemetry.addData("Rumble", "Running");
+            extra_counter+=1;
         }
         if (sound) {//sounds
-            telemetry.addData("Sound", "Running");
+            extra_counter+=1;
         }
         if (distance) {
-            telemetry.addData("Distance Sensor", "Running");
+            counter+=1;
         }
         //only on first initiation
         if (first) {
             init_all();
             if (camera) {//only on first init and if the camera variable is true
-                telemetry.addData("Camera", "Running");
+                counter+=1;
                 initVuforia();
                 initTfod();
             }
             if (encoder) {//only on first init and if the encoder variable is true
                 resetEncoder();
-                telemetry.addData("Encoders", "Running");
+                counter+=1;
             }
             if (imuInit){
                 imu();
+                counter+=1;
             }
         }
         if (colors) {//will init the color sensor values
             init_colorSensor();
-            telemetry.addData("Color Sensor", "Running");
+            counter+=1;
         }
         if (LED){
             init_LED();
-            telemetry.addData("LED", "Running");
+            extra_counter+=1;
             if (displayKind == org.firstinspires.ftc.teamcode.SampleRevBlinkinLedDriver.DisplayKind.AUTO) {
                 doAutoDisplay();
             }
         }
-        telemetry.addData("Systems", "Running");
+        telemetry.addData("Init:",  (counter) +"/7");
+        telemetry.addData("Extra Init:",  (extra_counter) +"/3");
         if (controls) {
             showControls();
         }
