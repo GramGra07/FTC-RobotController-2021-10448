@@ -48,6 +48,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot = new HardwarePushbot();   // Use a Pushbot's hardware
+    public double rotationalXMultiplier=0;//used for adaptable arm
+    public double rotationalYMultiplier=0;//used for adaptable arm
 //motors
     public DcMotor motorFrontLeft = null;
     public DcMotor motorBackLeft = null;
@@ -95,6 +97,10 @@ public class SAMPLEptpov extends LinearOpMode {
     //mark vuforia
     public static final String TAG = "Vuforia VuMark Sample";
     OpenGLMatrix lastLocation = null;
+    public double objWidth=0;
+    public double objHeight=0;
+    public double centerX=0;
+    public double centerY=0;
     //colorSensor
     final float[] hsvValues = new float[3];//gets values for color sensor
     //color
@@ -343,6 +349,30 @@ public class SAMPLEptpov extends LinearOpMode {
     //make space in telemetry read-out
     public void teleSpace() {
         telemetry.addLine();
+    }
+    public void getCenter(float left, float right,float top, float bottom, String object){
+        if (object==""){
+            getX(left, right, object);
+            getY(top, bottom, object);
+            getWidth(left, right, object);
+            getHeight(top, bottom, object);
+        }
+    }
+    public void getX(float left, float right, String object){
+        centerX=(left+((right-left)/2));
+    }
+    public void getY(float top, float bottom, String object){
+        centerY=(bottom+((top-bottom)/2));
+    }
+    public void getWidth(float left, float right, String object){
+        objWidth=right-left;
+    }
+    public void getHeight(float top, float bottom, String object){
+        objHeight=top-bottom;
+    }
+    public void adapt(){
+        setServo((int)(centerX*rotationalXMultiplier));
+        setServo((int)(centerX*rotationalYMultiplier));
     }
 //IMPORTANT INIT
     //will initiate all and give names of objects
@@ -689,6 +719,8 @@ public class SAMPLEptpov extends LinearOpMode {
                 int i = 0;
                 boolean isDuckDetected = false;
                 for (Recognition recognition : updatedRecognitions) {
+                    getCenter(recognition.getLeft(),recognition.getRight(),recognition.getTop(),
+                            recognition.getBottom(),recognition.getLabel());
                     telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
                     telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
                             recognition.getLeft(), recognition.getTop());
