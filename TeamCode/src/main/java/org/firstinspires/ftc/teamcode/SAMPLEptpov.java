@@ -818,7 +818,7 @@ public class SAMPLEptpov extends LinearOpMode {
         if (sensor_number==1){
             getDistance1(false);
             if (unit.equals("cm")){
-                if (CM_distance1>=minD && CM_distance1<=maxD){
+                if (!(CM_distance1 >= minD && CM_distance1 <= maxD)){
                     inRange=true;
                 }
             }
