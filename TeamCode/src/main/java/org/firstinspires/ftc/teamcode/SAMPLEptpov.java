@@ -48,6 +48,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot = new HardwarePushbot();   // Use a Pushbot's hardware
+//adaptable arm
     public double rotationalXMultiplier=0;//used for adaptable arm
     public double rotationalYMultiplier=0;//used for adaptable arm
 //motors
@@ -97,10 +98,10 @@ public class SAMPLEptpov extends LinearOpMode {
     //mark vuforia
     public static final String TAG = "Vuforia VuMark Sample";
     OpenGLMatrix lastLocation = null;
-    public double objWidth=0;
-    public double objHeight=0;
-    public double centerX=0;
-    public double centerY=0;
+    public double objWidth=0;//variable for object width
+    public double objHeight=0;// variable for object height
+    public double centerX=0;//variable for object centerx
+    public double centerY=0;// variable for object centerY
     //colorSensor
     final float[] hsvValues = new float[3];//gets values for color sensor
     //color
@@ -142,7 +143,8 @@ public class SAMPLEptpov extends LinearOpMode {
     public String direction_ANGLE;//string of angle
     public String pushSensorCheck;//shows value from push sensor
     public double headingVal=0;//heading in degrees
-    public double alteredHeading=0;
+    public double alteredHeading=0;//in case expansion hub is mounted in
+    // different direction than facing forward
     public double directionPower=0;//power in specified direction
 //  ▐▓█▀▀▀▀▀▀▀▀▀█▓▌░▄▄▄▄▄░
 //  ▐▓█░░▀░░▀▄░░█▓▌░█▄▄▄█░
@@ -163,6 +165,8 @@ public class SAMPLEptpov extends LinearOpMode {
     public String statusVal="OFFLINE";
     @Override
     public void runOpMode() {
+        init_controls(true,true,false,true);//initiates everything
+        //colors
         if (colors) {
             int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
             relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
@@ -179,8 +183,8 @@ public class SAMPLEptpov extends LinearOpMode {
                 });
             }
         }
-        init_controls(true,true,false,true);//initiates everything
-        if (tfod != null) {
+        //camera
+        if (tfod != null) {//initiates camera
             if (camera){
                     tfod.activate();
                     tfod.setZoom(1, 16.0 / 9.0);
@@ -206,15 +210,14 @@ public class SAMPLEptpov extends LinearOpMode {
         params.waitForNonLoopingSoundsToFinish = true;
         boolean was_dpad_up = false;//checks if dpad was pressed
         boolean was_dpad_down = false;//checks if dpad was pressed
-        //checks if b was pressed
-        //
+        //other initiates
         ElapsedTime runtime = new ElapsedTime();//runtime helps with endgame initiation and cues
         waitForStart();
         if (imuInit){//will set up everything for imu
             imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
             composeTelemetry();
         }
-        relicTrackables.activate();
+        relicTrackables.activate();//vumark
         while (opModeIsActive()) {
             init_controls(false,true,false,true);//only imu if first init//initiates everything
             double y = gamepad1.left_stick_y; // Remember, this is reversed!//forward backward
@@ -226,9 +229,9 @@ public class SAMPLEptpov extends LinearOpMode {
             double frontRightPower= (y - x - rx)/denominator;
             double backRightPower = (y + x - rx)/denominator;
             //slowmode
-            if (gamepad1.b && slowMode == 0) {
+            if (gamepad1.b && slowMode == 0) {//checks for button press and slowmode off
                 slowMode = 1;//sets slowmode to on
-            } else if (gamepad1.b && slowMode == 1) {
+            } else if (gamepad1.b && slowMode == 1) {//checks for button press and slowmode on
                 slowMode = 0;//sets slowmode to off
             }
             if (slowMode == 1) {
@@ -282,7 +285,6 @@ public class SAMPLEptpov extends LinearOpMode {
             motorBackLeft.setPower(backLeftPower);
             motorFrontRight.setPower(frontRightPower);
             motorBackRight.setPower(backRightPower);
-            sleep(50);
             teleSpace();//puts a space in telemetry
             //vumark
             if(camera) {
@@ -305,12 +307,12 @@ public class SAMPLEptpov extends LinearOpMode {
                     telemetry.addData("VuMark", "not visible");
                 }
             }
-            //fun stuff/ usefull but not usefull
+            //fun stuff/ useful but not useful
             if ( distance){
                 telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));//distance sensor
                 telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));//distance sensor
             }
-            if(sound){
+            if(sound){//telemetry for sound
                 telemetry.addData("Sound >", sounds[soundIndex]);
                 telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
             }
@@ -318,18 +320,19 @@ public class SAMPLEptpov extends LinearOpMode {
                 picInTele(0);
             }
             telemetry.update();
-
+            sleep(50);
         }
     }
     public void updateStatus(String status){
         statusVal=status;
-    }
+    }//set a new controller/game status
     //setServo//this sets the servo to a position based off a given degree
-    //servo.setPosition(setServo(90))
+    //ex: servo.setPosition(setServo(90))
     public double setServo(int degrees){
         position = degree_mult * degrees;
         return position;
     }
+    //expiremental
     public void dance(String direction_1) {//-1=back//1=forward//fun little thing we learned from others
         updateStatus("Dancing");
         directionPower=1;
@@ -350,34 +353,38 @@ public class SAMPLEptpov extends LinearOpMode {
     public void teleSpace() {
         telemetry.addLine();
     }
+    //center variables of a specific object
     public void getCenter(float left, float right,float top, float bottom, String object){
         if (object==""){
-            getX(left, right, object);
-            getY(top, bottom, object);
-            getWidth(left, right, object);
-            getHeight(top, bottom, object);
+            getX(left, right);
+            getY(top, bottom);
+            getWidth(left, right);
+            getHeight(top, bottom);
         }
     }
-    public void getX(float left, float right, String object){
+    //does math to get center of current identified object
+    public void getX(float left, float right){
         centerX=(left+((right-left)/2));
     }
-    public void getY(float top, float bottom, String object){
+    public void getY(float top, float bottom){
         centerY=(bottom+((top-bottom)/2));
     }
-    public void getWidth(float left, float right, String object){
+    //does math to get width and height of object
+    public void getWidth(float left, float right){
         objWidth=right-left;
     }
-    public void getHeight(float top, float bottom, String object){
+    public void getHeight(float top, float bottom){
         objHeight=top-bottom;
     }
+    //will set the servo ( assumed to be rotating arm ) a set amount for adaptable arm
     public void adapt(){
         setServo((int)(centerX*rotationalXMultiplier));
-        setServo((int)(centerX*rotationalYMultiplier));
+        setServo((int)(centerY*rotationalYMultiplier));
     }
 //IMPORTANT INIT
     //will initiate all and give names of objects
     public void init_all() {
-        updateStatus("INIT");
+        updateStatus("INIT");//sets status
         robot.init(hardwareMap);
         //init all motors
         motorFrontLeft = hardwareMap.get(DcMotor.class, "motorFrontLeft");
@@ -443,8 +450,6 @@ public class SAMPLEptpov extends LinearOpMode {
                 doAutoDisplay();
             }
         }
-        telemetry.addData("Init:",  (counter) +"/7");
-        telemetry.addData("Extra Init:",  (extra_counter) +"/3");
         if (controls) {
             showControls();
         }
@@ -461,8 +466,8 @@ public class SAMPLEptpov extends LinearOpMode {
     //telemetry additions
     public void showFeedback(){
     //get variables for telemetry
+        telemetry.addData("Status",statusVal);//shows current status
         //gets direction vertical
-        telemetry.addData("Status",statusVal);
         if (gamepad1.left_stick_y<0){
             direction_FW="forward";
         }if (gamepad1.left_stick_y>0){
@@ -554,6 +559,8 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addData("Distance Result",verifyDistance(1));
         }
         teleSpace();
+        telemetry.addData("Init:",  (counter) +"/7");
+        telemetry.addData("Extra Init:",  (extra_counter) +"/3");
     }
 //ENDS OVERALL INIT PROCESS
 //INIT ALL DIFFERENT VALUES AND DEVICES
@@ -638,7 +645,6 @@ public class SAMPLEptpov extends LinearOpMode {
     public void getHeading(){
         headingVal=angles.firstAngle+alteredHeading;
     }
-//colors
 //colors
     public void init_colorSensor(){
         sensor_color.setGain(10);
