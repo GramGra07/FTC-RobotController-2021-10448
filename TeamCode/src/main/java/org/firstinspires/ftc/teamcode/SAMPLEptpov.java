@@ -551,6 +551,7 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         if(distance){
             getDistance1(true);//gets and shows distances
+            telemetry.addData("Distance Result",verifyDistance(1));
         }
         teleSpace();
     }
@@ -695,7 +696,6 @@ public class SAMPLEptpov extends LinearOpMode {
         CM_distance1= distance1.getDistance(DistanceUnit.CM);
         M_distance1= distance1.getDistance(DistanceUnit.METER);
         IN_distance1= distance1.getDistance(DistanceUnit.INCH);
-        //verifyDistance();
         if (give) {
             giveDistances();
         }
@@ -706,6 +706,18 @@ public class SAMPLEptpov extends LinearOpMode {
                 .addData("distance", String.format("%.0001f cm",CM_distance1))
                 .addData("distance", String.format("%.0001f m",M_distance1))
                 .addData("distance", String.format("%.0001f in",IN_distance1));
+    }
+    public String verifyDistance(int sensor_number){
+        if (sensor_number == 1 ){
+            getDistance1(false);
+            if ((CM_distance1 * 10 != MM_distance1)||(M_distance1 * 10 != CM_distance1)){
+                return "Distance isn't perfect";
+            }
+            else{
+            return "Distance is perfect";
+            }
+        }
+        return null;
     }
 //camera
     String format(OpenGLMatrix transformationMatrix) {
@@ -818,7 +830,7 @@ public class SAMPLEptpov extends LinearOpMode {
         if (sensor_number==1){
             getDistance1(false);
             if (unit.equals("cm")){
-                if (!(CM_distance1 >= minD && CM_distance1 <= maxD)){
+                if (CM_distance1 >= minD && CM_distance1 <= maxD){
                     inRange=true;
                 }
             }
