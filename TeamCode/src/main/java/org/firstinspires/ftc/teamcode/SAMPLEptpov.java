@@ -110,6 +110,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public int blueVal = 0;//the blue value in rgb
     public String colorName = "N/A";//gets color name
 //other vars
+    double numero = 0;
     //slowmode
     double slowMode = 0; //0 is off
     double regular_divider = 1;  //tells slowmode how fast to go when not on
@@ -331,6 +332,10 @@ public class SAMPLEptpov extends LinearOpMode {
     public double setServo(int degrees){
         position = degree_mult * degrees;
         return position;
+    }
+    public double milli_seconds(int seconds){
+        numero = 1000*seconds;
+        return numero;
     }
     //expiremental
     public void dance(String direction_1) {//-1=back//1=forward//fun little thing we learned from others
