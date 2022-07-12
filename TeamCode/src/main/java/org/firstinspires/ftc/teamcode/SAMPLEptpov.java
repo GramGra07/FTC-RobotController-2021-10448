@@ -110,6 +110,9 @@ public class SAMPLEptpov extends LinearOpMode {
     public int blueVal = 0;//the blue value in rgb
     public String colorName = "N/A";//gets color name
 //other vars
+    public boolean debug_mode = false;//debug mode
+    public boolean testing_mode = true;//test mode
+    public String lastButtonPressed = "N/A";//last button pressed//debug will help with this
     double numero = 0;
     //slowmode
     double slowMode = 0; //0 is off
@@ -124,7 +127,7 @@ public class SAMPLEptpov extends LinearOpMode {
     Gamepad.RumbleEffect customRumbleEffect1;    // Use to build a custom rumble sequence.
     Gamepad.RumbleEffect customRumbleEffect2;//custom rumble
     Gamepad.RumbleEffect customRumbleEffect3;//custom rumble
-    final double End_Game = 75.0;              // Wait this many seconds before rumble-alert for half-time.
+    final double End_Game = 118.0;              // Wait this many seconds before rumble-alert for half-time.
     //sounds
     String[] sounds = {"ss_alarm", "ss_bb8_down", "ss_bb8_up", "ss_darth_vader", "ss_fly_by",
             "ss_mf_fail", "ss_laser", "ss_laser_burst", "ss_light_saber", "ss_light_saber_long", "ss_light_saber_short",
@@ -275,7 +278,7 @@ public class SAMPLEptpov extends LinearOpMode {
             }
             //endgame init
             if ((runtime.seconds() > End_Game) && !endgame) {//sets endgame
-                endGame(true);
+                endGame(false);
             }
             if (!endgame) {
                 telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()));//shows time til endgame
@@ -337,6 +340,9 @@ public class SAMPLEptpov extends LinearOpMode {
         numero = 1000*seconds;
         return numero;
     }
+    public void getLastButtonPress(String button){
+        lastButtonPressed = button;
+    }//gets last button press
     //expiremental
     public void dance(String direction_1) {//-1=back//1=forward//fun little thing we learned from others
         updateStatus("Dancing");
@@ -471,72 +477,96 @@ public class SAMPLEptpov extends LinearOpMode {
     //telemetry additions
     public void showFeedback(){
     //get variables for telemetry
+        if (debug_mode){
+            telemetry.addData(" |__|                  ", "" );
+            telemetry.addData(" (o-)                   ",  "");
+            telemetry.addData("//||\\                  ", "");
+        }
+        if(testing_mode){
+            telemetry.addData(" Testing Mode 1...2...3...                  ", "" );
+        }
         telemetry.addData("Status",statusVal);//shows current status
         //gets direction vertical
-        if (gamepad1.left_stick_y<0){
-            direction_FW="forward";
-        }if (gamepad1.left_stick_y>0){
-            direction_FW="backward";
-        }if (gamepad1.left_stick_y==0){
-            direction_FW="idle";
-        }
-        //gets direction horizontal
-        if (gamepad1.left_stick_x>0){
-            direction_LR="right";
-        }if (gamepad1.left_stick_x<0){
-            direction_LR="left";
-        }if (gamepad1.left_stick_x==0){
-            direction_LR="idle";
-        }
-        //gets turn angle
-        if (gamepad1.right_stick_x>0){
-            direction_TLR="right";
-        }if (gamepad1.right_stick_x<0){
-            direction_TLR="left";
-        }if (gamepad1.right_stick_x==0){
-            direction_TLR="idle";
-        }
-        //shows slowmode status
-        if (slowMode==1){
-            slowModeON= "True";
-        }else{
-            slowModeON="False";
+        if (testing_mode) {
+            if (gamepad1.left_stick_y < 0) {
+                direction_FW = "forward";
+            }
+            if (gamepad1.left_stick_y > 0) {
+                direction_FW = "backward";
+            }
+            if (gamepad1.left_stick_y == 0) {
+                direction_FW = "idle";
+            }
+
+            //gets direction horizontal
+            if (gamepad1.left_stick_x > 0) {
+                direction_LR = "right";
+            }
+            if (gamepad1.left_stick_x < 0) {
+                direction_LR = "left";
+            }
+            if (gamepad1.left_stick_x == 0) {
+                direction_LR = "idle";
+            }
+            //gets turn angle
+            if (gamepad1.right_stick_x > 0) {
+                direction_TLR = "right";
+            }
+            if (gamepad1.right_stick_x < 0) {
+                direction_TLR = "left";
+            }
+            if (gamepad1.right_stick_x == 0) {
+                direction_TLR = "idle";
+            }
+            //shows slowmode status
+            if (slowMode == 1) {
+                slowModeON = "True";
+            } else {
+                slowModeON = "False";
+            }
         }
         //direction heading
         if (imuInit){
             getHeading();
             telemetry.addData("Heading","%.1f", headingVal);
             telemetry.addData("Heading Direction",direction_ANGLE);
-            if (headingVal>45 && headingVal<135){
-                direction_ANGLE="right";
-            }
-            if (headingVal>-45 && headingVal<45){
-                direction_ANGLE="forward";
-            }
-            if (headingVal<135 && headingVal>-135){
-                direction_ANGLE="backwards";
-            }
-            if (headingVal<-45 && headingVal>-135){
-                direction_ANGLE="left";
+            if (testing_mode) {
+                if (headingVal > 45 && headingVal < 135) {
+                    direction_ANGLE = "right";
+                }
+                if (headingVal > -45 && headingVal < 45) {
+                    direction_ANGLE = "forward";
+                }
+                if (headingVal < 135 && headingVal > -135) {
+                    direction_ANGLE = "backwards";
+                }
+                if (headingVal < -45 && headingVal > -135) {
+                    direction_ANGLE = "left";
+                }
             }
         }
         //checks push sensor
-        if(push){
-            if (digitalTouch.getState()) {
-                pushSensorCheck="Not Pressed";
-            } else {
-                pushSensorCheck="Pressed";
+        digitalTouch.getState();
+        if (testing_mode) {
+            if (push) {
+                if (digitalTouch.getState()) {
+                    pushSensorCheck = "Not Pressed";
+                } else {
+                    pushSensorCheck = "Pressed";
+                }
             }
         }
     //shows all previously defined values
-        telemetry.addLine()
-                .addData("direction",   direction_FW)
-                .addData("strafe",   direction_LR)
-                .addData("turn",direction_TLR)
-                .addData("r trigger",  "%.2f", gamepad1.right_trigger)
-                .addData("l trigger",  "%.2f", gamepad1.left_trigger);
-        teleSpace();
-        telemetry.addData("slowMode",slowModeON);
+        if (testing_mode) {
+            telemetry.addLine()
+                    .addData("direction", direction_FW)
+                    .addData("strafe", direction_LR)
+                    .addData("turn", direction_TLR)
+                    .addData("r trigger", "%.2f", gamepad1.right_trigger)
+                    .addData("l trigger", "%.2f", gamepad1.left_trigger);
+            teleSpace();
+            telemetry.addData("slowMode", slowModeON);
+        }
         teleSpace();
         //gives color values
         if (colors){
@@ -556,8 +586,10 @@ public class SAMPLEptpov extends LinearOpMode {
                     .addData("RGB", "(" + redVal + "," + greenVal + "," + blueVal + ")");//shows rgb value
         }
         teleSpace();
-        if (push) {
-            telemetry.addData("Digital Touch", pushSensorCheck);
+        if (testing_mode) {
+            if (push) {
+                telemetry.addData("Digital Touch", pushSensorCheck);
+            }
         }
         if(distance){
             getDistance1(true);//gets and shows distances
@@ -816,6 +848,8 @@ public class SAMPLEptpov extends LinearOpMode {
     public void endGame(boolean flash){
         gamepad1.runRumbleEffect(customRumbleEffect1);//gives a custom rumble effect to both gamepads
         gamepad2.runRumbleEffect(customRumbleEffect1);
+        gamepad1.rumble(500);
+        gamepad2.rumble(500);
         endgame =true;
         if (flash){
             flash();
