@@ -167,6 +167,10 @@ public class SAMPLEptpov extends LinearOpMode {
     public boolean push=false;//tells to init
     public boolean picture=true;
     public String statusVal="OFFLINE";
+    double frontLeftPower =0;
+    double backLeftPower  =0;
+    double frontRightPower=0;
+    double backRightPower =0;
     @Override
     public void runOpMode() {
         init_controls(true,true,false,true);//initiates everything
@@ -228,15 +232,21 @@ public class SAMPLEptpov extends LinearOpMode {
             double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing//left right
             double rx = -gamepad1.right_stick_x;//turning
             double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);//gets max value
-            double frontLeftPower = (y + x + rx)/denominator;
-            double backLeftPower  = (y - x + rx)/denominator;
-            double frontRightPower= (y - x - rx)/denominator;
-            double backRightPower = (y + x - rx)/denominator;
+            frontLeftPower = (y + x + rx)/denominator;
+            backLeftPower  = (y - x + rx)/denominator;
+            frontRightPower = (y - x - rx)/denominator;
+            backRightPower = (y + x - rx)/denominator;
             //slowmode
             if (gamepad1.b && slowMode == 0) {//checks for button press and slowmode off
                 slowMode = 1;//sets slowmode to on
+                if (debug_mode){
+                    getLastButtonPress("b");
+                }
             } else if (gamepad1.b && slowMode == 1) {//checks for button press and slowmode on
                 slowMode = 0;//sets slowmode to off
+                if (debug_mode){
+                    getLastButtonPress("b");
+                }
             }
             if (slowMode == 1) {
                 backRightPower /= slowMode_divider;//divides power by the divider
@@ -254,9 +264,16 @@ public class SAMPLEptpov extends LinearOpMode {
             if (sound){
                 if (gamepad1.dpad_down && !was_dpad_down) {
                     soundIndex = (soundIndex + 1) % sounds.length;
+                    if (debug_mode){
+                        getLastButtonPress("Dpad Down");
+                    }
                 }
                 if (gamepad1.dpad_up && !was_dpad_up) {
                     soundIndex = (soundIndex + sounds.length - 1) % sounds.length;
+                    if (debug_mode){
+                        getLastButtonPress("Dpad Up");
+                    }
+                    }
                 }
                 if (gamepad1.a && !soundPlaying) {
                     if ((soundID = myApp.getResources().getIdentifier(sounds[soundIndex], "raw", myApp.getPackageName())) != 0) {
@@ -267,6 +284,9 @@ public class SAMPLEptpov extends LinearOpMode {
                                         soundPlaying = false;
                                     }
                                 });
+                    }
+                    if (debug_mode){
+                        getLastButtonPress("a");
                     }
                 }
             }
@@ -326,7 +346,6 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.update();
             sleep(50);
         }
-    }
     public void updateStatus(String status){
         statusVal=status;
     }//set a new controller/game status
