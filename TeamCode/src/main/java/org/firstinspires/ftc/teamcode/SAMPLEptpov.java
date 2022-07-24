@@ -48,10 +48,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 //@Disabled
 public class SAMPLEptpov extends LinearOpMode {
     HardwarePushbot robot = new HardwarePushbot();   // Use a Pushbot's hardware
-//adaptable arm
+    //adaptable arm
     public double rotationalXMultiplier=0;//used for adaptable arm
     public double rotationalYMultiplier=0;//used for adaptable arm
-//motors
+    //motors
     public DcMotor motorFrontLeft = null;
     public DcMotor motorBackLeft = null;
     public DcMotor motorFrontRight = null;
@@ -61,7 +61,7 @@ public class SAMPLEptpov extends LinearOpMode {
     //vars
     public double position = 0;//sets servo position to 0-1 multiplier
     public double degree_mult = 0.00277777777;//Multiplies this by degrees to see exact position in degrees
-//devices
+    //devices
     DigitalChannel digitalTouch;    //push sensor
     NormalizedColorSensor sensor_color;    //color sensor
     View relativeLayout;   //for 2 phones, puts colors on RC
@@ -83,18 +83,18 @@ public class SAMPLEptpov extends LinearOpMode {
     public double M_distance1 = 0;//m distance for distance sensor 1
     public double IN_distance1 = 0;//in distance for distance sensor 1
     //camera
-        //vuforia
-    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";//init tfod
-    private static final String[] LABELS = {
+    //vuforia
+    public static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";//init tfod
+    public static final String[] LABELS = {
             "Ball",
             "Cube",
             "Duck",
             "Marker"
     };
-    private static final String VUFORIA_KEY = //to actually use vuforia
+    public static final String VUFORIA_KEY = //to actually use vuforia
             "AXmzBcj/////AAABme5HSJ/H3Ucup73WSIaV87tx/sFHYaWfor9OZVg6afr2Bw7kNolHd+mF5Ps91SlQpgBHulieI0jcd86kqJSwx46BZ8v8DS5S5x//eQWMEGjMDnvco4/oTcDwuSOLIVZG2UtLmJXPS1L3CipjabePFlqAL2JtBlN78p6ZZbRFSHW680hWEMSimZuQy/cMudD7J/MjMjMs7b925b8BkijlnTQYr7CbSlXrpDh5K+9fLlk2OyEZ4w7tm7e4UJDInJ/T3oi8PqqKCqkUaTkJWlQsvoELbDu5L2FgzsuDhBLe2rHtJRqfORd7n+6M30UdFSsxqq5TaZztkWgzRUr1GC3yBSTS6iFqEuL3g06GrfwOJF0F";
-    private VuforiaLocalizer vuforia;
-    private TFObjectDetector tfod;
+    public VuforiaLocalizer vuforia;
+    public TFObjectDetector tfod;
     //mark vuforia
     public static final String TAG = "Vuforia VuMark Sample";
     OpenGLMatrix lastLocation = null;
@@ -109,7 +109,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public int greenVal = 0;//the green value in rgb
     public int blueVal = 0;//the blue value in rgb
     public String colorName = "N/A";//gets color name
-//other vars
+    //other vars
     public boolean debug_mode = false;//debug mode
     public boolean testing_mode = true;//test mode
     public String lastButtonPressed = "N/A";//last button pressed//debug will help with this
@@ -150,7 +150,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public double alteredHeading=0;//in case expansion hub is mounted in
     // different direction than facing forward
     public double directionPower=0;//power in specified direction
-//  ▐▓█▀▀▀▀▀▀▀▀▀█▓▌░▄▄▄▄▄░
+    //  ▐▓█▀▀▀▀▀▀▀▀▀█▓▌░▄▄▄▄▄░
 //  ▐▓█░░▀░░▀▄░░█▓▌░█▄▄▄█░
 //  ▐▓█░░▄░░▄▀░░█▓▌░█▄▄▄█░
 //  ▐▓█▄▄▄▄▄▄▄▄▄█▓▌░█████░
@@ -187,16 +187,16 @@ public class SAMPLEptpov extends LinearOpMode {
                 relativeLayout.post(new Runnable() {
                     public void run() {
                         relativeLayout.setBackgroundColor(Color.WHITE);//RC phone background
-                 }
+                    }
                 });
             }
         }
         //camera
         if (tfod != null) {//initiates camera
             if (camera){
-                    tfod.activate();
-                    tfod.setZoom(1, 16.0 / 9.0);
-                }
+                tfod.activate();
+                tfod.setZoom(1, 16.0 / 9.0);
+            }
         }
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
@@ -227,6 +227,8 @@ public class SAMPLEptpov extends LinearOpMode {
         }
         relicTrackables.activate();//vumark
         while (opModeIsActive()) {
+            runtime.reset();
+            getRuntime();//gets runtime
             init_controls(false,true,false,true);//only imu if first init//initiates everything
             double y = gamepad1.left_stick_y; // Remember, this is reversed!//forward backward
             double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing//left right
@@ -273,79 +275,79 @@ public class SAMPLEptpov extends LinearOpMode {
                     if (debug_mode){
                         getLastButtonPress("Dpad Up");
                     }
-                    }
-                }
-                if (gamepad1.a && !soundPlaying) {
-                    if ((soundID = myApp.getResources().getIdentifier(sounds[soundIndex], "raw", myApp.getPackageName())) != 0) {
-                        soundPlaying = true;
-                        SoundPlayer.getInstance().startPlaying(myApp, soundID, params, null,
-                                new Runnable() {
-                                    public void run() {
-                                        soundPlaying = false;
-                                    }
-                                });
-                    }
-                    if (debug_mode){
-                        getLastButtonPress("a");
-                    }
                 }
             }
-            was_dpad_up = gamepad1.dpad_up;
-            was_dpad_down = gamepad1.dpad_down;
-            //camera run
-            if (camera){//will run vuforia
-                run_vu();
-            }
-            //endgame init
-            if ((runtime.seconds() > End_Game) && !endgame) {//sets endgame
-                endGame(false);
-            }
-            if (!endgame) {
-                telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()));//shows time til endgame
-            }
-            //
-            //sets power to respective motors
-            motorFrontLeft.setPower(frontLeftPower);
-            motorBackLeft.setPower(backLeftPower);
-            motorFrontRight.setPower(frontRightPower);
-            motorBackRight.setPower(backRightPower);
-            teleSpace();//puts a space in telemetry
-            //vumark
-            if(camera) {
-                RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
-                if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
-                    telemetry.addData("VuMark", "%s visible", vuMark);
-                    OpenGLMatrix pose = ((VuforiaTrackableDefaultListener) relicTemplate.getListener()).getPose();
-                    telemetry.addData("Pose", format(pose));
-                    if (pose != null) {
-                        VectorF trans = pose.getTranslation();
-                        Orientation rot = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-                        double tX = trans.get(0);
-                        double tY = trans.get(1);
-                        double tZ = trans.get(2);
-                        double rX = rot.firstAngle;
-                        double rY = rot.secondAngle;
-                        double rZ = rot.thirdAngle;
-                    }
-                } else {
-                    telemetry.addData("VuMark", "not visible");
+            if (gamepad1.a && !soundPlaying) {
+                if ((soundID = myApp.getResources().getIdentifier(sounds[soundIndex], "raw", myApp.getPackageName())) != 0) {
+                    soundPlaying = true;
+                    SoundPlayer.getInstance().startPlaying(myApp, soundID, params, null,
+                            new Runnable() {
+                                public void run() {
+                                    soundPlaying = false;
+                                }
+                            });
+                }
+                if (debug_mode){
+                    getLastButtonPress("a");
                 }
             }
-            //fun stuff/ useful but not useful
-            if ( distance){
-                telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));//distance sensor
-                telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));//distance sensor
-            }
-            if(sound){//telemetry for sound
-                telemetry.addData("Sound >", sounds[soundIndex]);
-                telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
-            }
-            if (picture) {
-                picInTele(0);
-            }
-            telemetry.update();
-            sleep(50);
         }
+        was_dpad_up = gamepad1.dpad_up;
+        was_dpad_down = gamepad1.dpad_down;
+        //camera run
+        if (camera){//will run vuforia
+            run_vu();
+        }
+        //endgame init
+        if ((runtime.seconds() > End_Game) && !endgame) {//sets endgame
+            endGame(false);
+        }
+        if (!endgame) {
+            telemetry.addData(">", "Almost ENDGAME: %3.0f Sec \n", (End_Game - runtime.seconds()));//shows time til endgame
+        }
+        //
+        //sets power to respective motors
+        motorFrontLeft.setPower(frontLeftPower);
+        motorBackLeft.setPower(backLeftPower);
+        motorFrontRight.setPower(frontRightPower);
+        motorBackRight.setPower(backRightPower);
+        teleSpace();//puts a space in telemetry
+        //vumark
+        if(camera) {
+            RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
+            if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
+                telemetry.addData("VuMark", "%s visible", vuMark);
+                OpenGLMatrix pose = ((VuforiaTrackableDefaultListener) relicTemplate.getListener()).getPose();
+                telemetry.addData("Pose", format(pose));
+                if (pose != null) {
+                    VectorF trans = pose.getTranslation();
+                    Orientation rot = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+                    double tX = trans.get(0);
+                    double tY = trans.get(1);
+                    double tZ = trans.get(2);
+                    double rX = rot.firstAngle;
+                    double rY = rot.secondAngle;
+                    double rZ = rot.thirdAngle;
+                }
+            } else {
+                telemetry.addData("VuMark", "not visible");
+            }
+        }
+        //fun stuff/ useful but not useful
+        if ( distance){
+            telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));//distance sensor
+            telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));//distance sensor
+        }
+        if(sound){//telemetry for sound
+            telemetry.addData("Sound >", sounds[soundIndex]);
+            telemetry.addData("Status >", soundPlaying ? "Playing" : "Stopped");
+        }
+        if (picture) {
+            picInTele(0);
+        }
+        telemetry.update();
+        sleep(50);
+    }
     public void updateStatus(String status){
         statusVal=status;
     }//set a new controller/game status
@@ -411,7 +413,7 @@ public class SAMPLEptpov extends LinearOpMode {
         setServo((int)(centerX*rotationalXMultiplier));
         setServo((int)(centerY*rotationalYMultiplier));
     }
-//IMPORTANT INIT
+    //IMPORTANT INIT
     //will initiate all and give names of objects
     public void init_all() {
         updateStatus("INIT");//sets status
@@ -495,7 +497,7 @@ public class SAMPLEptpov extends LinearOpMode {
     }
     //telemetry additions
     public void showFeedback(){
-    //get variables for telemetry
+        //get variables for telemetry
         if (debug_mode){
             telemetry.addData(" |__|                  ", "" );
             telemetry.addData(" (o-)                   ",  "");
@@ -575,7 +577,7 @@ public class SAMPLEptpov extends LinearOpMode {
                 }
             }
         }
-    //shows all previously defined values
+        //shows all previously defined values
         if (testing_mode) {
             telemetry.addLine()
                     .addData("direction", direction_FW)
@@ -618,7 +620,7 @@ public class SAMPLEptpov extends LinearOpMode {
         telemetry.addData("Init:",  (counter) +"/7");
         telemetry.addData("Extra Init:",  (extra_counter) +"/3");
     }
-//ENDS OVERALL INIT PROCESS
+    //ENDS OVERALL INIT PROCESS
 //INIT ALL DIFFERENT VALUES AND DEVICES
 //imu
     public void imu(){//gyroscope with heading pitch and roll
@@ -701,7 +703,7 @@ public class SAMPLEptpov extends LinearOpMode {
     public void getHeading(){
         headingVal=angles.firstAngle+alteredHeading;
     }
-//colors
+    //colors
     public void init_colorSensor(){
         sensor_color.setGain(10);
         relativeLayout.post(new Runnable() {
@@ -735,7 +737,7 @@ public class SAMPLEptpov extends LinearOpMode {
             ((SwitchableLight) sensor_color).enableLight(true);
         }
     }
-//encoder
+    //encoder
     public void resetEncoder(){
         telemetry.addData("Status", "Resetting Encoders");    //
         robot.motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -752,7 +754,7 @@ public class SAMPLEptpov extends LinearOpMode {
                 robot.motorBackLeft.getCurrentPosition(),
                 robot.motorBackRight.getCurrentPosition());
     }
-//distance
+    //distance
     public void getDistance1(boolean give){
         MM_distance1= distance1.getDistance(DistanceUnit.MM);
         CM_distance1= distance1.getDistance(DistanceUnit.CM);
@@ -776,12 +778,12 @@ public class SAMPLEptpov extends LinearOpMode {
                 return "Distance isn't perfect";
             }
             else{
-            return "Distance is perfect";
+                return "Distance is perfect";
             }
         }
         return null;
     }
-//camera
+    //camera
     String format(OpenGLMatrix transformationMatrix) {
         return (transformationMatrix != null) ? transformationMatrix.formatAsTransform() : "null";
     }
@@ -834,7 +836,7 @@ public class SAMPLEptpov extends LinearOpMode {
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
     }
-//Led
+    //Led
     public void init_LED(){
         blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
         pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
@@ -862,7 +864,7 @@ public class SAMPLEptpov extends LinearOpMode {
         blinkinLedDriver.setPattern(pattern);
         patternName.setValue(pattern.toString());
     }
-//END OVERALL INIT FUNCTIONS
+    //END OVERALL INIT FUNCTIONS
     //endgame effects
     public void endGame(boolean flash){
         gamepad1.runRumbleEffect(customRumbleEffect1);//gives a custom rumble effect to both gamepads
@@ -931,7 +933,7 @@ public class SAMPLEptpov extends LinearOpMode {
         updated_inRange= false;
         inRange=false;
     }
-//encoder driving
+    //encoder driving
     public void encoderDrive(double speed,
                              double leftInches, double rightInches) {
         int newLeftTarget;
@@ -1111,6 +1113,7 @@ public class SAMPLEptpov extends LinearOpMode {
             telemetry.addLine().addData("            ╔══╝║                      ","");
         }
     }
+}
     //5lines
 //  ▐▓█▀▀▀▀▀▀▀▀▀█▓▌░▄▄▄▄▄░
 //  ▐▓█░░▀░░▀▄░░█▓▌░█▄▄▄█░
@@ -1216,4 +1219,3 @@ public class SAMPLEptpov extends LinearOpMode {
 //  ║║║║║╬╚╣═╣║║║╚══╗
 //  ╚╩═╩╩══╩═╩╩╝╚══╗║
 //  ████████████╔══╝║
-}
